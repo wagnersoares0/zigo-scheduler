@@ -21,7 +21,7 @@ jobs:
     name: Quality (Node ${{ matrix.node }})
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -42,11 +42,54 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run tests
+        run: npm test
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Lint debt gate
+        run: LINT_DEBT=1 npx eslint . --max-warnings=106
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify package install
+        run: npm run verify:package
+
+  browser-and-frameworks:
+    name: Browser and framework checks
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run CI gate
-        run: npm run ci:check
+      - name: Build
+        run: npm run build
+
+      - name: Verify browser integration
+        run: node scripts/verify-browser.mjs
+
+      - name: Verify external frameworks
+        run: node scripts/verify-external-frameworks.mjs
 
   dependency-audit:
     name: Dependency audit
