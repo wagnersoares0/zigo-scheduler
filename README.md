@@ -26,12 +26,17 @@ a product, not just events painted on a grid.**
 - Optional RRULE recurrence and opt-in locale packs, so apps only load the
   pieces they actually use.
 
-Quick links: [Install](#install-the-entry-you-need) ·
+Quick links: [Live Demo](https://zigoschedule.com) ·
+[Looking For Testers](#looking-for-testers) ·
+[Official Starters](#official-starters) ·
+[Install](#install-the-entry-you-need) ·
 [Capability Matrix](#professional-scheduler-capability-matrix) ·
 [React Example](#react-complete-minimum-example) ·
 [Web Component](#html-php-laravel-django-rails) ·
 [Headless Layout](#headless-layout) ·
-[API Reference](API_REFERENCE.md) · [License](#license)
+[API Reference](API_REFERENCE.md) ·
+[Report An Issue](https://github.com/wagnersoares0/zigo-scheduler/issues/new/choose) ·
+[License](#license)
 
 ## What It Includes
 
@@ -67,6 +72,43 @@ It is not a backend. Tenants, users, permissions, payments, storage, reminders
 and API calls stay in the host application. The scheduler receives already
 scoped data, validates the calendar rules it knows about, renders the schedule,
 and sends changes back through callbacks or DOM events.
+
+## Looking For Testers
+
+Zigo Scheduler is pre-1.0 and actively looking for developers to test it in real
+appointment-based products. The core is already usable, but the best feedback
+now is practical: where installation is confusing, where the UI breaks, and
+which edge cases appear in real apps.
+
+Useful feedback:
+
+- React, Vite, Next.js and SSR installation issues.
+- Web Component usage in HTML, PHP, Laravel, Django, Rails or other non-React
+  stacks.
+- Time-zone and DST edge cases with real business hours.
+- Drag, resize, range selection, buffers and conflict validation bugs.
+- Mobile and touch behavior on iOS Safari and Android Chrome.
+- Accessibility problems with keyboard, focus, dialogs or screen readers.
+- Documentation gaps where the expected backend contract is not clear.
+
+Please use [GitHub Issues](https://github.com/wagnersoares0/zigo-scheduler/issues/new/choose)
+for bugs and focused feedback. Include the entry point, package version,
+browser, operating system, locale, time zone and the smallest data sample that
+reproduces the behavior.
+
+## Official Starters
+
+The website is the canonical live demo: [zigoschedule.com](https://zigoschedule.com).
+The starters are meant for copying into a real app, not for matching the demo
+pixel by pixel.
+
+| Starter | Path | Use it for |
+| --- | --- | --- |
+| React/Vite | [`templates/react`](templates/react) | A clean React app using `@zigoschedule/scheduler-react`. |
+| HTML/Web Component | [`templates/html`](templates/html) | A no-framework page using `<zigo-scheduler>`. |
+
+The same packages are also smoke-tested in clean Vite and Next.js consumer
+projects during the release gate.
 
 ## Release Quality
 

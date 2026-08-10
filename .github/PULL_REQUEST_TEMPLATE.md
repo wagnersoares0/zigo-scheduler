@@ -25,7 +25,7 @@ Describe the change in a few lines.
 - [ ] `npm run typecheck`
 - [ ] `npm run lint`
 - [ ] `npm run build`
-- [ ] `npm run verify:pacote`
+- [ ] `npm run verify:package`
 - [ ] `npm run release:check`
 
 ## Notes
