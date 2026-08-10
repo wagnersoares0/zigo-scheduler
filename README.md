@@ -87,7 +87,6 @@ Useful feedback:
   stacks.
 - Time-zone and DST edge cases with real business hours.
 - Drag, resize, range selection, buffers and conflict validation bugs.
-- Mobile and touch behavior on iOS Safari and Android Chrome.
 - Accessibility problems with keyboard, focus, dialogs or screen readers.
 - Documentation gaps where the expected backend contract is not clear.
 
