@@ -42,6 +42,8 @@ const buildCell = (cell: AgendaMonthCell, messages: AgendaMessages): HTMLElement
     const more = el("div", "za-month-more");
     more.textContent = messages.more(cell.hiddenCount, cell.totalCount);
     more.dataset.moreDay = cell.dayKey;
+    more.setAttribute("role", "button");
+    more.setAttribute("tabindex", "0");
     node.appendChild(more);
   }
 

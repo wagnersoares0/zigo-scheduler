@@ -15,7 +15,7 @@ import {
   useAgendaEventRender,
   useAgendaEventTooltip,
 } from "./AgendaEventContent";
-import { useAgendaLocale, useAgendaMessages } from "../../config/AgendaConfigContext";
+import { useAgendaLocale, useAgendaMessages, useAgendaTimeZone } from "../../config/AgendaConfigContext";
 
 type BloqCardProps = {
   bloq: Block;
@@ -51,8 +51,9 @@ export const BloqCard = memo(function BloqCard({
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const locale = useAgendaLocale();
   const messages = useAgendaMessages();
+  const timeZone = useAgendaTimeZone();
   const isTiny = height < 34;
-  const event = useMemo(() => blockToAgendaEventInput(bloq), [bloq]);
+  const event = useMemo(() => blockToAgendaEventInput(bloq, timeZone), [bloq, timeZone]);
   const blockTitle = bloq.motivo?.trim() || messages.block;
   const rangeText = formatAgendaTimeRange(s, e, locale);
   const timeText = isTiny

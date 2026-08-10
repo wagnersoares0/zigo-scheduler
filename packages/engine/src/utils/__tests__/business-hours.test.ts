@@ -265,4 +265,21 @@ describe("business-hours helpers", () => {
     expect(hours.isClosed).toBe(true);
     expect(hours.closedMessage).toBeTruthy();
   });
+
+  it("rejects business hours that cross midnight instead of inventing a short day", () => {
+    const hours = getEffectiveBusinessHoursForDay({
+      dayKey: "2026-06-22",
+      tenantHorariosSemana: {
+        monday: { opensAt: "22:00", closesAt: "02:00", active: true },
+      },
+      tenantHorarioPadrao: { opensAt: "09:00", closesAt: "17:00" },
+    });
+
+    expect(hours).toMatchObject({
+      startMinute: 22 * 60,
+      endMinute: 22 * 60,
+      isClosed: true,
+    });
+    expect(hours.closedMessage).toContain("cannot cross midnight");
+  });
 });

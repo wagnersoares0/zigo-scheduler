@@ -34,8 +34,6 @@ export type GestureCallbacks = {
  */
 export const RESIZE_HANDLE_ATTR = "data-ag-resize-handle";
 
-const disposers: Array<() => void> = [];
-
 /**
  * A pointer release after a drag also fires a click, which would open the
  * appointment the user just moved. This flag lets the click handler skip the
@@ -99,11 +97,6 @@ const hidePreview = (canvas: HTMLElement): void => {
   canvas.querySelector(".za-ghost")?.remove();
 };
 
-/** Tears down every gesture from the previous render. */
-export const releaseGestures = (): void => {
-  while (disposers.length) disposers.pop()?.();
-};
-
 /**
  * Wires dragging and resizing onto the cards.
  *
@@ -118,7 +111,8 @@ export function attachGestures(
   layout: AgendaLayout,
   events: Map<string, AgendaLayoutEvent>,
   callbacks: GestureCallbacks
-): void {
+): () => void {
+  const disposers: Array<() => void> = [];
   /** Client coordinates to a grid position, via the layout's own hit test. */
   const hitTest = (clientX: number, clientY: number): HitTestResult | null => {
     const bounds = canvas.getBoundingClientRect();
@@ -227,4 +221,9 @@ export function attachGestures(
     );
     disposers.push(() => resizing.destroy());
   }
+
+  return () => {
+    hidePreview(canvas);
+    while (disposers.length) disposers.pop()?.();
+  };
 }

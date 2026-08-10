@@ -180,7 +180,7 @@ const PopoverAppointmentButton = memo(function PopoverAppointmentButton({
         mode: appointmentColorMode,
         defaultColor: appointmentDefaultColor,
       });
-  const event = appointmentToAgendaEventInput(ag);
+  const event = appointmentToAgendaEventInput(ag, timeZone);
   const { dispatchMouseEnter, dispatchMouseLeave, optionClassName, renderArg } =
     useAgendaEventRender({
       options: calendarOptions,
@@ -281,6 +281,7 @@ const PopoverBlockButton = memo(function PopoverBlockButton({
 }: PopoverBlockButtonProps) {
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const locale = useAgendaLocale();
+  const timeZone = useAgendaTimeZone();
   const messages = useAgendaMessages();
   const blockProfessionalId = getBlockProfessionalId(bloq);
   const start = toMin(getBlockStartTime(bloq));
@@ -289,7 +290,7 @@ const PopoverBlockButton = memo(function PopoverBlockButton({
   const theme = blockProfessionalId
     ? getProfessionalCardThemeForVisibleList(blockProfessionalId, themeProfs)
     : null;
-  const event = blockToAgendaEventInput(bloq);
+  const event = blockToAgendaEventInput(bloq, timeZone);
   const { dispatchMouseEnter, dispatchMouseLeave, optionClassName, renderArg } =
     useAgendaEventRender({
       options: calendarOptions,

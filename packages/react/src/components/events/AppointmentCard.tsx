@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useMemo, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import type { Appointment, DayProfCardTheme } from "@zigoschedule/scheduler-engine";
 import { AgendaElementDragging } from "@zigoschedule/scheduler-interaction";
 import type { DragPayload, DraggableCallbacks } from "@zigoschedule/scheduler-interaction";
@@ -24,7 +24,7 @@ import {
 } from "./AgendaEventContent";
 import { DayAppointmentCard } from "./DayAppointmentCard";
 import { WeekAppointmentCard } from "./WeekAppointmentCard";
-import { useAgendaLocale, useAgendaMessages } from "../../config/AgendaConfigContext";
+import { useAgendaLocale, useAgendaMessages, useAgendaTimeZone } from "../../config/AgendaConfigContext";
 
 const getProfessionalInitials = (name: string): string => {
   const parts = name
@@ -99,6 +99,7 @@ export const AgCard = memo(function AgCard({
 }: AgCardProps) {
   const messages = useAgendaMessages();
   const locale = useAgendaLocale();
+  const timeZone = useAgendaTimeZone();
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const resizeStartHandleRef = useRef<HTMLSpanElement | null>(null);
   const resizeHandleRef = useRef<HTMLSpanElement | null>(null);
@@ -113,7 +114,16 @@ export const AgCard = memo(function AgCard({
     dayKey,
     endMinute: e,
   });
-  const event = useMemo(() => appointmentToAgendaEventInput(ag), [ag]);
+  const event = useMemo(() => appointmentToAgendaEventInput(ag, timeZone), [ag, timeZone]);
+  const restoreCardAfterGesture = useCallback(() => {
+    window.setTimeout(() => {
+      suppressClickRef.current = false;
+      if (btnRef.current) {
+        btnRef.current.style.opacity = "";
+        btnRef.current.style.pointerEvents = "";
+      }
+    }, 0);
+  }, []);
   const clientName = getAppointmentClientName(ag) || messages.appointment;
   const serviceLabel = getAppointmentServiceLabel(ag, true);
   const compactProfessionalDisplayName = professionalName ? truncateProfessionalName(professionalName, 13) : "";
@@ -188,15 +198,7 @@ export const AgCard = memo(function AgCard({
         cbsRef.current.onDragMove?.(p, hit, nextStartMinute, x, y),
       onDrop: (r) => {
         const result = cbsRef.current.onDrop?.(r);
-        void Promise.resolve(result).finally(() => {
-          window.setTimeout(() => {
-            suppressClickRef.current = false;
-            if (btnRef.current) {
-              btnRef.current.style.opacity = "";
-              btnRef.current.style.pointerEvents = "";
-            }
-          }, 0);
-        });
+        void Promise.resolve(result).then(restoreCardAfterGesture, restoreCardAfterGesture);
       },
       onDragCancel: (id) => {
         cbsRef.current.onDragCancel?.(id);
@@ -219,7 +221,7 @@ export const AgCard = memo(function AgCard({
     };
     const dnd = new AgendaElementDragging(el, payload, wrapped);
     return () => dnd.destroy();
-  }, [ag.id, agDuracao, agProfId, canDrag, dayKey, s]);
+  }, [ag.id, agDuracao, agProfId, canDrag, dayKey, restoreCardAfterGesture, s]);
 
   useEffect(() => {
     const el = resizeHandleRef.current;
@@ -246,15 +248,7 @@ export const AgCard = memo(function AgCard({
         resizeCbsRef.current.onResizeMove?.(p, hit, nextEndMinute),
       onResizeEnd: (r) => {
         const result = resizeCbsRef.current.onResizeEnd?.(r);
-        void Promise.resolve(result).finally(() => {
-          window.setTimeout(() => {
-            suppressClickRef.current = false;
-            if (btnRef.current) {
-              btnRef.current.style.opacity = "";
-              btnRef.current.style.pointerEvents = "";
-            }
-          }, 0);
-        });
+        void Promise.resolve(result).then(restoreCardAfterGesture, restoreCardAfterGesture);
       },
       onResizeCancel: (id) => {
         resizeCbsRef.current.onResizeCancel?.(id);
@@ -273,7 +267,7 @@ export const AgCard = memo(function AgCard({
     };
     const resizing = new AgendaEventResizing(el, payload, wrapped);
     return () => resizing.destroy();
-  }, [ag.id, agProfId, canResize, dayKey, e, gridMin, s]);
+  }, [ag.id, agProfId, canResize, dayKey, e, gridMin, restoreCardAfterGesture, s]);
 
   useEffect(() => {
     const el = resizeStartHandleRef.current;
@@ -300,15 +294,7 @@ export const AgCard = memo(function AgCard({
         resizeCbsRef.current.onResizeMove?.(p, hit, nextBoundaryMinute),
       onResizeEnd: (r) => {
         const result = resizeCbsRef.current.onResizeEnd?.(r);
-        void Promise.resolve(result).finally(() => {
-          window.setTimeout(() => {
-            suppressClickRef.current = false;
-            if (btnRef.current) {
-              btnRef.current.style.opacity = "";
-              btnRef.current.style.pointerEvents = "";
-            }
-          }, 0);
-        });
+        void Promise.resolve(result).then(restoreCardAfterGesture, restoreCardAfterGesture);
       },
       onResizeCancel: (id) => {
         resizeCbsRef.current.onResizeCancel?.(id);
@@ -327,7 +313,7 @@ export const AgCard = memo(function AgCard({
     };
     const resizing = new AgendaEventResizing(el, payload, wrapped);
     return () => resizing.destroy();
-  }, [ag.id, agProfId, canResize, dayKey, e, gridMin, height, s]);
+  }, [ag.id, agProfId, canResize, dayKey, e, gridMin, height, restoreCardAfterGesture, s]);
 
   return (
     <>

@@ -1,6 +1,6 @@
 {
   "name": "@zigoschedule/scheduler-core",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "Domain rules for time zones, DST-safe scheduling, availability windows and localization. No DOM, no framework.",
   "license": "MIT",
   "author": "Wagner Silva <contato@zigoapp.com.br>",

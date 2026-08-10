@@ -10,7 +10,7 @@ import { spawnSync } from "node:child_process";
  */
 
 const skipAudit = process.argv.includes("--skip-audit");
-const debtWarningLimit = 107;
+const debtWarningLimit = 106;
 
 const steps = [
   { label: "tests", command: "npx", args: ["vitest", "run"] },

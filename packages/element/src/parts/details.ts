@@ -7,6 +7,7 @@ import {
   type AgendaMessages,
 } from "@zigoschedule/scheduler-core";
 import { el } from "../dom";
+import { activeElementFor, keepFocusInside } from "./focus";
 
 /**
  * Built-in details sheet opened when an appointment is selected.
@@ -130,15 +131,17 @@ const reference = (id: string): string => {
   );
 };
 
-let closeCurrent: (() => void) | null = null;
+const currentByRoot = new WeakMap<HTMLElement, () => void>();
 
 /** Close the open sheet, if any. Safe to call at any time. */
-export function closeDetails(): void {
-  closeCurrent?.();
-  closeCurrent = null;
+export function closeDetails(root: HTMLElement): void {
+  const close = currentByRoot.get(root);
+  if (!close) return;
+  currentByRoot.delete(root);
+  close();
 }
 
-export const detailsOpen = (): boolean => closeCurrent !== null;
+export const detailsOpen = (root: HTMLElement): boolean => currentByRoot.has(root);
 
 /** Body row: icon, title, supporting text and an optional value on the right. */
 const row = (
@@ -181,7 +184,8 @@ export function openDetails(
   onAction: (action: DetailsAction) => void,
   options: { messages?: AgendaMessages; locale?: string } = {}
 ): void {
-  closeDetails();
+  const focusedBeforeOpen = activeElementFor(root);
+  closeDetails(root);
 
   const messages = options.messages ?? getAgendaMessages(options.locale);
   const locale = options.locale ?? DEFAULT_AGENDA_LOCALE;
@@ -193,9 +197,11 @@ export function openDetails(
 
   const backdrop = el("div", "za-sheet-backdrop");
   const sheet = el("div", "za-sheet");
+  const closeSheet = () => closeDetails(root);
   sheet.setAttribute("role", "dialog");
   sheet.setAttribute("aria-modal", "true");
   sheet.setAttribute("aria-label", messages.openAppointment(data.clientName));
+  sheet.tabIndex = -1;
   sheet.addEventListener("click", (e) => e.stopPropagation());
 
   // ── Header ────────────────────────────────────────────────────────────────
@@ -213,7 +219,7 @@ export function openDetails(
   closeButton.type = "button";
   closeButton.setAttribute("aria-label", messages.close);
   closeButton.appendChild(icon(ICONS.close, 20));
-  closeButton.addEventListener("click", closeDetails);
+  closeButton.addEventListener("click", closeSheet);
 
   head.append(heading, closeButton);
 
@@ -278,7 +284,7 @@ export function openDetails(
     // Close after the action, like the React example. The host app can continue
     // with one clear command instead of making the user close the sheet twice.
     button.addEventListener("click", () => {
-      closeDetails();
+      closeSheet();
       onAction(action.key);
     });
     actions.appendChild(button);
@@ -288,7 +294,7 @@ export function openDetails(
   const secondaryButton = el("button", "za-sheet-ghost");
   secondaryButton.type = "button";
   secondaryButton.textContent = messages.close;
-  secondaryButton.addEventListener("click", closeDetails);
+  secondaryButton.addEventListener("click", closeSheet);
 
   const primaryButton = el("button", "za-primary");
   primaryButton.type = "button";
@@ -297,25 +303,35 @@ export function openDetails(
     ? `${messages.details.charge} ${formatAgendaCurrency(price, locale)}`
     : messages.details.charge;
   primaryButton.addEventListener("click", () => {
-    closeDetails();
+    closeSheet();
     onAction("charge");
   });
   foot.append(secondaryButton, primaryButton);
 
   sheet.append(head, rows, actions, foot);
   backdrop.appendChild(sheet);
-  backdrop.addEventListener("click", closeDetails);
+  backdrop.addEventListener("click", closeSheet);
   root.appendChild(backdrop);
 
   const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Escape") closeDetails();
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeSheet();
+      return;
+    }
+
+    if (event.key !== "Tab") return;
+    keepFocusInside(event, root, sheet);
   };
   root.ownerDocument.addEventListener("keydown", onKeyDown);
 
-  closeCurrent = () => {
+  currentByRoot.set(root, () => {
     root.ownerDocument.removeEventListener("keydown", onKeyDown);
     backdrop.remove();
-  };
+    if (focusedBeforeOpen instanceof HTMLElement && focusedBeforeOpen.isConnected) {
+      focusedBeforeOpen.focus({ preventScroll: true });
+    }
+  });
 
   closeButton.focus();
 }

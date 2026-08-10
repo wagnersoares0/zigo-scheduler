@@ -3,6 +3,7 @@ import {
   getAppointmentRecurrenceExceptions,
   getAppointmentRecurrenceOverrides,
   getAppointmentRecurrenceRule,
+  hasValidAppointmentTiming,
   type Appointment,
   type AppointmentOccurrencePatch,
 } from "@zigoschedule/scheduler-engine";
@@ -83,10 +84,11 @@ export function expandRecurringAppointments(
   timeZone: TimeZone,
   range: { from: Date; to: Date }
 ): Appointment[] {
-  if (!expander) return appointments;
+  const validAppointments = appointments.filter(hasValidAppointmentTiming);
+  if (!expander) return validAppointments;
 
   const out: Appointment[] = [];
-  for (const appointment of appointments) {
+  for (const appointment of validAppointments) {
     const rule = recurrenceRuleOf(appointment);
     if (!rule) {
       out.push(appointment);

@@ -115,7 +115,7 @@ export const AgendaMonthAppointmentButton = memo(
           mode: appointmentColorMode,
           defaultColor: appointmentDefaultColor,
         });
-    const event = appointmentToAgendaEventInput(ag);
+    const event = appointmentToAgendaEventInput(ag, timeZone);
     const {
       dispatchMouseEnter,
       dispatchMouseLeave,

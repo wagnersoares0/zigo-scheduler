@@ -323,6 +323,10 @@ export const Agenda = memo(function Agenda({
     () => groupAppointmentsByDay(expandedAppointments, { timeZone }),
     [expandedAppointments, timeZone]
   );
+  const mutationAgsByDay = useMemo(
+    () => groupAppointmentsByDay(expandedAppointments, { excludeCanceled: true, timeZone }),
+    [expandedAppointments, timeZone]
+  );
   const bloqsByDay = useMemo(() => groupBlocksByDay(blocks), [blocks]);
 
   const professionalHoursForDay = useCallback(
@@ -570,7 +574,7 @@ export const Agenda = memo(function Agenda({
         gridMin={step}
         canUpdateAppointments={editable}
         agsByDay={agsByDay}
-        mutationAgsByDay={agsByDay}
+        mutationAgsByDay={mutationAgsByDay}
         bloqsByDay={bloqsByDay}
         pendingAppointmentIds={EMPTY_IDS}
         slots={slots}

@@ -36,7 +36,7 @@ import {
 } from "../../events/AgendaEventContent";
 import {
 } from "../../grid/AgendaMorePopover";
-import { useAgendaLocale, useAgendaMessages } from "../../../config/AgendaConfigContext";
+import { useAgendaLocale, useAgendaMessages, useAgendaTimeZone } from "../../../config/AgendaConfigContext";
 
 export type AgendaMonthViewProps = {
   date: Date;
@@ -99,13 +99,14 @@ export const AgendaMonthBlockButton = memo(function AgendaMonthBlockButton({
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const locale = useAgendaLocale();
   const messages = useAgendaMessages();
+  const timeZone = useAgendaTimeZone();
   const blockProfessionalId = getBlockProfessionalId(bloq);
   const start = toMin(getBlockStartTime(bloq));
   const end = toMin(getBlockEndTime(bloq));
   const theme = blockProfessionalId
     ? getProfessionalCardThemeForVisibleList(blockProfessionalId, themeProfs)
     : null;
-  const event = blockToAgendaEventInput(bloq);
+  const event = blockToAgendaEventInput(bloq, timeZone);
   const { dispatchMouseEnter, dispatchMouseLeave, optionClassName, renderArg } =
     useAgendaEventRender({
       options: calendarOptions,

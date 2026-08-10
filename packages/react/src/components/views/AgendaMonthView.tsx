@@ -39,7 +39,7 @@ import {
   type AgendaMonthMoreItem,
   type AgendaMorePopoverAnchorRect,
 } from "../grid/AgendaMorePopover";
-import { useAgendaMessages, useAgendaTimeZone } from "../../config/AgendaConfigContext";
+import { useAgendaLocale, useAgendaMessages, useAgendaTimeZone } from "../../config/AgendaConfigContext";
 import { AgendaMonthAppointmentButton } from "./month/AgendaMonthAppointmentButton";
 import { AgendaMonthBlockButton } from "./month/AgendaMonthBlockButton";
 import { AgendaMonthDayCell } from "./month/AgendaMonthDayCell";
@@ -110,6 +110,7 @@ export const AgendaMonthView = memo(function AgendaMonthView({
   weekStartsOn = DEFAULT_WEEK_START,
 }: AgendaMonthViewProps) {
   const timeZone = useAgendaTimeZone();
+  const locale = useAgendaLocale();
   const messages = useAgendaMessages();
   const [morePopover, setMorePopover] = useState<{
     dayKey: string;
@@ -185,13 +186,20 @@ export const AgendaMonthView = memo(function AgendaMonthView({
   useEffect(() => {
     setMorePopover(null);
   }, [agsByDay, bloqsByDay, date, dayMaxEvents]);
+  const weekdayLabels = useMemo(
+    () =>
+      weekdayOrder(weekStartsOn).map((index) =>
+        new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
+          new Date(2026, 7, 2 + index, 12),
+        ),
+      ),
+    [locale, weekStartsOn],
+  );
 
   return (
     <section className="flex-1 min-w-0 overflow-auto bg-white">
       <div className="grid min-h-full min-w-[1120px] grid-cols-7 border-l border-t border-[#D1D5DB]">
-        {weekdayOrder(weekStartsOn)
-          .map((index) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][index])
-          .map((weekday) => (
+        {weekdayLabels.map((weekday) => (
           <div
             key={weekday}
             className="sticky top-0 z-20 flex h-10 items-center justify-center border-r border-b border-[#D1D5DB] bg-[#F8FAFC] px-3 text-[12px] font-semibold text-[#374151]"

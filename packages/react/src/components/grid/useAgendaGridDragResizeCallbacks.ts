@@ -172,6 +172,15 @@ export const useAgendaGridDragResizeCallbacks = ({
     }, 120);
   }, [clearOverlayResetTimer, dragOverlayRef]);
 
+  const mutationErrorMessage = useCallback(
+    (error: unknown): string => {
+      if (error instanceof RangeError) return messages.invalidDuration;
+      if (error instanceof Error && error.message) return error.message;
+      return messages.invalidDuration;
+    },
+    [messages.invalidDuration],
+  );
+
   const getResizeBlockReason = useCallback(
     (payload: ResizePayload, hit: HitTestResult | null, nextBoundaryMinute: number): string | null => {
       if (!hit) return messages.resizeWithinAppointmentColumn;
@@ -309,8 +318,20 @@ export const useAgendaGridDragResizeCallbacks = ({
             buildDataHora(decision.mutation.nextRange.dayKey, decision.mutation.nextRange.startMinute, timeZone),
             decision.mutation.nextRange.resourceId,
           );
-        } finally {
           clearDragOverlay();
+        } catch (error) {
+          const message = mutationErrorMessage(error);
+          onSetDayClosedNotice(message);
+          setGridNotice(message);
+          onMutationError?.(message);
+          dragOverlayRef.current?.setDragPreview({
+            ...nextPreview,
+            phase: "reverting",
+            blockedMessage: message,
+          });
+          clearDragOverlaySoon();
+        } finally {
+          clearDropColumnHighlight();
         }
       },
       onDragCancel: () => {
@@ -331,6 +352,7 @@ export const useAgendaGridDragResizeCallbacks = ({
       findRenderedAgById,
       getDropBlockReason,
       hitTest,
+      mutationErrorMessage,
       onDropAg,
       onMutationError,
       onSetDayClosedNotice,
@@ -454,8 +476,18 @@ export const useAgendaGridDragResizeCallbacks = ({
               ? buildDataHora(decision.mutation.nextRange.dayKey, decision.mutation.nextRange.startMinute, timeZone)
               : undefined,
           });
-        } finally {
           clearDragOverlay();
+        } catch (error) {
+          const message = mutationErrorMessage(error);
+          onSetDayClosedNotice(message);
+          setGridNotice(message);
+          onMutationError?.(message);
+          dragOverlayRef.current?.setResizePreview({
+            ...nextPreview,
+            phase: "reverting",
+            blockedMessage: message,
+          });
+          clearDragOverlaySoon();
         }
       },
       onResizeCancel: () => {
@@ -475,6 +507,7 @@ export const useAgendaGridDragResizeCallbacks = ({
       getResizeRange,
       gridMin,
       hitTest,
+      mutationErrorMessage,
       onMutationError,
       onResizeAg,
       onSetDayClosedNotice,

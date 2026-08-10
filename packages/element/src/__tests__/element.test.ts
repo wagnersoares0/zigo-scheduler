@@ -62,6 +62,15 @@ const mount = (attrs: Record<string, string> = {}): ZigoSchedulerElement => {
 
 const shadow = (element: ZigoSchedulerElement) => element.shadowRoot!;
 const text = (element: ZigoSchedulerElement) => shadow(element).textContent ?? "";
+const pointer = (type: string, init: PointerEventInit) =>
+  new PointerEvent(type, {
+    bubbles: true,
+    cancelable: true,
+    pointerId: 1,
+    pointerType: "mouse",
+    button: 0,
+    ...init,
+  });
 
 beforeEach(() => {
   document.body.innerHTML = "";
@@ -198,7 +207,66 @@ describe("events", () => {
 
     expect(seen).toEqual([{ action: "whatsapp", id: "1" }]);
   });
-});
+
+  it("keeps built-in details isolated between element instances", () => {
+    const first = mount({ view: "day", date: "2026-08-10", timezone: TIME_ZONE });
+    const second = mount({ view: "day", date: "2026-08-10", timezone: TIME_ZONE });
+    first.appointments = APPOINTMENTS;
+    second.appointments = [{ ...APPOINTMENTS[0], id: "2", cliente_nome: "Noah Carter" }];
+
+    shadow(first).querySelector<HTMLElement>("[data-event-id='1']")?.click();
+    shadow(second).querySelector<HTMLElement>("[data-event-id='2']")?.click();
+
+    expect(shadow(first).querySelector(".za-sheet")).not.toBeNull();
+    expect(shadow(second).querySelector(".za-sheet")).not.toBeNull();
+  });
+
+  it("does not duplicate month click callbacks after redraw", () => {
+    const element = mount({ view: "month", date: "2026-08-10", timezone: TIME_ZONE });
+    element.appointments = APPOINTMENTS;
+    element.setAttribute("locale", "en-US");
+
+    const seen: unknown[] = [];
+    element.addEventListener("select-event", (e) => seen.push((e as CustomEvent).detail));
+    shadow(element).querySelector<HTMLElement>("[data-event-id='1']")?.click();
+
+    expect(seen).toHaveLength(1);
+  });
+
+  it("blocks drag events that conflict with another appointment", () => {
+    const element = mount({ view: "day", date: "2026-08-10", timezone: TIME_ZONE });
+    element.appointments = [
+      APPOINTMENTS[0],
+      {
+        ...APPOINTMENTS[0],
+        id: "2",
+        data_hora: zonedTimeToUtc("2026-08-10", 11 * 60, TIME_ZONE).toISOString(),
+        cliente_nome: "Noah Carter",
+      },
+    ];
+
+    const moved: unknown[] = [];
+    const blocked: unknown[] = [];
+    element.addEventListener("move-event", (e) => moved.push((e as CustomEvent).detail));
+    element.addEventListener("blocked-event", (e) => blocked.push((e as CustomEvent).detail));
+
+    const layout = element.layout!;
+    const event = layout.events.find((item) => item.id === "1")!;
+    const card = shadow(element).querySelector<HTMLElement>("[data-event-id='1']")!;
+    const x = event.left - layout.axisWidth + 8;
+    const startY = event.top + 8;
+    const conflictY = layout.minuteToY(11 * 60) + 8;
+
+    card.dispatchEvent(pointer("pointerdown", { clientX: x, clientY: startY }));
+    document.dispatchEvent(pointer("pointermove", { clientX: x, clientY: conflictY }));
+    document.dispatchEvent(pointer("pointerup", { clientX: x, clientY: conflictY }));
+
+    expect(moved).toHaveLength(0);
+    expect(blocked).toEqual([
+      expect.objectContaining({ code: "APPOINTMENT_CONFLICT", id: "1" }),
+    ]);
+  });
+  });
 
 describe("data properties", () => {
   it("starts empty and renders nothing but the grid", () => {

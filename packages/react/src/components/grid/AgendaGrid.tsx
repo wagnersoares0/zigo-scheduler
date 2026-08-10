@@ -15,7 +15,12 @@ import type {
 } from "@zigoschedule/scheduler-engine";
 import { SLOT_H, getProfessionalCardThemeForVisibleList } from "@zigoschedule/scheduler-engine";
 import { dateKey, zoneNowParts } from "@zigoschedule/scheduler-engine";
-import { getAppointmentServiceLabel } from "@zigoschedule/scheduler-engine";
+import {
+  getAppointmentDurationMinutes,
+  getAppointmentServiceLabel,
+  getAppointmentStartsAt,
+  zoneMins,
+} from "@zigoschedule/scheduler-engine";
 import {
   calculateAgendaDynamicSlotHeight,
   getAgendaVisualEndMinute,
@@ -37,6 +42,11 @@ import {
 import { AgendaGridColumn } from "./AgendaGridColumn";
 import { AgendaGridHeader } from "./AgendaGridHeader";
 import { AgendaGridLoadingState } from "./AgendaGridLoadingState";
+import {
+  AgendaMorePopover,
+  type AgendaMonthMoreItem,
+  type AgendaMorePopoverAnchorRect,
+} from "./AgendaMorePopover";
 import { AgendaTimeAxis } from "./AgendaTimeAxis";
 import { useAgendaViewportHeight } from "./useAgendaViewportHeight";
 import { InlineGridNotice } from "./InlineGridNotice";
@@ -227,6 +237,11 @@ export const AgendaGrid = memo(function AgendaGrid({
   const clockTick = useAgendaClock();
   const brtTodayKey = useMemo(() => zoneNowParts(timeZone).dayKey, [timeZone, clockTick]);
   const [gridNotice, setGridNotice] = useState<string | null>(null);
+  const [morePopover, setMorePopover] = useState<{
+    dayKey: string;
+    items: AgendaMonthMoreItem[];
+    anchorRect: AgendaMorePopoverAnchorRect;
+  } | null>(null);
   const gridDays = useMemo(() => (days?.length ? days : [date]), [date, days]);
   const gridDayKeys = useMemo(
     () => gridDays.map((day) => dateKey(day)).join("|"),
@@ -265,6 +280,14 @@ export const AgendaGrid = memo(function AgendaGrid({
   );
   const autoScrollKeyRef = useRef<string | null>(null);
   const dismissGridNotice = useCallback(() => setGridNotice(null), []);
+  const openMoreAppointments = useCallback(
+    (
+      dayKey: string,
+      items: AgendaMonthMoreItem[],
+      anchorRect: AgendaMorePopoverAnchorRect,
+    ) => setMorePopover({ dayKey, items, anchorRect }),
+    [],
+  );
   const getColumnBusinessHours = useCallback(
     (dayKey: string) => {
       const fallback = {
@@ -681,6 +704,7 @@ export const AgendaGrid = memo(function AgendaGrid({
                 onCloseDaySelection={onCloseDaySelection}
                 onOpenBloqueio={onOpenBloqueio}
                 onOpenAgendamento={onOpenAgendamento}
+                onOpenMoreAppointments={openMoreAppointments}
                 dndCallbacks={dndCallbacks}
                 resizeCallbacks={resizeCallbacks}
                 onAgendaCallbackError={onAgendaCallbackError}
@@ -690,6 +714,31 @@ export const AgendaGrid = memo(function AgendaGrid({
         </div>
       </div>
       <InlineGridNotice message={gridNotice} onDismiss={dismissGridNotice} />
+      {morePopover && (
+        <AgendaMorePopover
+          dayKey={morePopover.dayKey}
+          items={morePopover.items}
+          anchorRect={morePopover.anchorRect}
+          themeProfs={colorReferenceProfs}
+          appointmentColorMode={appointmentColorMode}
+          appointmentDefaultColor={appointmentDefaultColor}
+          onClose={() => setMorePopover(null)}
+          onOpenAgendamento={(ag, dayKey, jsEvent) => {
+            const start = zoneMins(getAppointmentStartsAt(ag), timeZone);
+            onOpenAgendamento(
+              ag,
+              dayKey,
+              start,
+              start + getAppointmentDurationMinutes(ag, gridMin),
+              jsEvent,
+            );
+          }}
+          onOpenBloqueio={onOpenBloqueio}
+          calendarOptions={calendarOptions}
+          calendarView={calendarView}
+          onAgendaCallbackError={onAgendaCallbackError}
+        />
+      )}
     </section>
   );
 });

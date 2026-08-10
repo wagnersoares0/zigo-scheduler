@@ -50,6 +50,10 @@ import { AgCard } from "../events/AppointmentCard";
 import { BloqCard } from "../events/BlockCard";
 import { AgendaNowColumnOverlay } from "./AgendaNowColumnOverlay";
 import { AgendaSlotLaneCell } from "./AgendaSlotLaneCell";
+import type {
+  AgendaMonthMoreItem,
+  AgendaMorePopoverAnchorRect,
+} from "./AgendaMorePopover";
 import { resolveAgendaColumnBounds } from "./useAgendaColumnBounds";
 import { resolveColumnSelection } from "./resolveColumnSelection";
 import type {
@@ -170,6 +174,11 @@ type AgendaGridColumnProps = {
     start: number,
     end: number,
   ) => void;
+  onOpenMoreAppointments: (
+    dayKey: string,
+    items: AgendaMonthMoreItem[],
+    anchorRect: AgendaMorePopoverAnchorRect,
+  ) => void;
   dndCallbacks: DraggableCallbacks;
   resizeCallbacks: ResizableCallbacks;
   onAgendaCallbackError?: (error: Error | null) => void;
@@ -222,6 +231,7 @@ export const AgendaGridColumn = memo(function AgendaGridColumn({
   onCloseDaySelection,
   onOpenBloqueio,
   onOpenAgendamento,
+  onOpenMoreAppointments,
   dndCallbacks,
   resizeCallbacks,
   onAgendaCallbackError,
@@ -266,6 +276,14 @@ export const AgendaGridColumn = memo(function AgendaGridColumn({
 
   const minuteToPx = (minute: number) =>
     dayMinuteToPx(minute, dataColumnHeight);
+  const clearSelectionDrag = () => {
+    const drag = dayDragRef.current;
+    if (drag) {
+      drag.active = false;
+      drag.selectionStarted = false;
+    }
+    pendingSelectionRef.current = null;
+  };
   const overflowButtonEl =
     overflowDayAgs.length > 0
       ? (() => {
@@ -297,6 +315,23 @@ export const AgendaGridColumn = memo(function AgendaGridColumn({
               aria-label={messages.viewMoreAppointments(overflowDayAgs.length)}
               onClick={(ev) => {
                 ev.stopPropagation();
+                const rect = ev.currentTarget.getBoundingClientRect();
+                onOpenMoreAppointments(
+                  col.dayKey,
+                  overflowDayAgs.map((ag) => ({
+                    kind: "ag",
+                    ag,
+                    start: zoneMins(getAppointmentStartsAt(ag), timeZone),
+                  })),
+                  {
+                    top: rect.top,
+                    right: rect.right,
+                    bottom: rect.bottom,
+                    left: rect.left,
+                    width: rect.width,
+                    height: rect.height,
+                  },
+                );
               }}
             >
               {messages.more(overflowDayAgs.length, overflowDayAgs.length)}
@@ -399,6 +434,31 @@ export const AgendaGridColumn = memo(function AgendaGridColumn({
           return;
         }
 
+        const drag = dayDragRef.current;
+        const pendingSelection = pendingSelectionRef.current;
+        if (
+          drag &&
+          drag.active &&
+          drag.pointerId === ev.pointerId &&
+          drag.colKey === colKey &&
+          pendingSelection
+        ) {
+          const moved =
+            Math.abs(ev.clientY - drag.originClientY) >= 4 ||
+            Math.abs(ev.clientX - drag.originClientX) >= 4;
+          if (moved) drag.selectionStarted = true;
+          if (drag.selectionStarted) {
+            const nextSelection: DaySelection = {
+              ...pendingSelection,
+              end: pointerMinute.minute,
+              source: "range",
+              isDrag: true,
+              isDragSelection: true,
+            };
+            pendingSelectionRef.current = nextSelection;
+          }
+        }
+
         showTimeHoverTooltip({
           clientX: ev.clientX,
           clientY: ev.clientY,
@@ -413,8 +473,55 @@ export const AgendaGridColumn = memo(function AgendaGridColumn({
       onPointerLeave={() => {
         if (!dayDragRef.current?.active) hideTimeHoverTooltip();
       }}
-      onPointerUp={hideTimeHoverTooltip}
-      onPointerCancel={hideTimeHoverTooltip}
+      onPointerUp={(ev) => {
+        hideTimeHoverTooltip();
+        const drag = dayDragRef.current;
+        const pendingSelection = pendingSelectionRef.current;
+        if (!drag || !drag.active || drag.pointerId !== ev.pointerId || drag.colKey !== colKey) return;
+
+        const pointerMinute = getPointerMinuteInColumn(colKey, ev.clientY);
+        const finalSelection: DaySelection | null = pendingSelection && pointerMinute
+          ? {
+              ...pendingSelection,
+              end: pointerMinute.minute,
+              source: "range",
+              isDrag: true,
+              isDragSelection: true,
+            }
+          : pendingSelection;
+
+        try {
+          ev.currentTarget.releasePointerCapture(ev.pointerId);
+        } catch {
+          // Pointer capture may already have been released by the browser.
+        }
+        pendingSelectionRef.current = null;
+        drag.active = false;
+
+        if (!finalSelection || !drag.selectionStarted) return;
+
+        const preview = getSelectionPreview(finalSelection);
+        if (preview.blockedMessage) {
+          drag.selectionStarted = false;
+          onSetDayClosedNotice(preview.blockedMessage);
+          return;
+        }
+
+        drag.selectionStarted = false;
+        onSetDayClosedNotice(null);
+        onSetDaySelection({
+          ...finalSelection,
+          start: preview.startMinute,
+          end: preview.endMinute,
+          source: "range",
+          isDrag: true,
+          isDragSelection: true,
+        });
+      }}
+      onPointerCancel={() => {
+        hideTimeHoverTooltip();
+        clearSelectionDrag();
+      }}
       className="relative border-r border-[#E5E7EB] bg-white"
       style={{
         height: dataColumnHeight,

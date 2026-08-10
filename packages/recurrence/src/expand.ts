@@ -128,25 +128,28 @@ export function expandRecurrence(input: RecurrenceInput): Occurrence[] {
   const occurrences: Occurrence[] = [];
   let index = 0;
 
-  for (const date of rules.between(from, to, true)) {
-    if (occurrences.length >= limit) break;
-
+  rules.between(from, to, true, (date) => {
     const slotDayKey = `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
     const current = index++;
 
-    if (skip.has(slotDayKey)) continue;
+    if (skip.has(slotDayKey)) return true;
 
     const override = overrides[slotDayKey];
-    const startsAt = override?.startsAt
-      ? new Date(override.startsAt)
-      : zonedTimeToUtc(slotDayKey, startMinute, timeZone);
-    if (Number.isNaN(startsAt.getTime())) continue;
+    let startsAt: Date;
+    try {
+      startsAt = override?.startsAt
+        ? new Date(override.startsAt)
+        : zonedTimeToUtc(slotDayKey, startMinute, timeZone);
+    } catch {
+      return true;
+    }
+    if (Number.isNaN(startsAt.getTime())) return true;
 
     const minutes = override?.durationMinutes ?? input.durationMinutes;
     const endsAt = new Date(startsAt.getTime() + minutes * 60_000);
 
     // The widened search can produce occurrences outside the real window.
-    if (endsAt <= input.range.from || startsAt >= input.range.to) continue;
+    if (endsAt <= input.range.from || startsAt >= input.range.to) return true;
 
     occurrences.push({
       startsAt: startsAt.toISOString(),
@@ -157,7 +160,9 @@ export function expandRecurrence(input: RecurrenceInput): Occurrence[] {
       index: current,
       moved: Boolean(override),
     });
-  }
+
+    return occurrences.length < limit;
+  });
 
   // Return wall-clock order, not slot order. A slot from August moved to December
   // is produced while iterating August; returning it there would force every

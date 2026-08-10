@@ -310,6 +310,23 @@ describe("events", () => {
     expect(model.events).toHaveLength(0);
   });
 
+  it("ignores malformed appointments and blocks instead of poisoning geometry", () => {
+    const model = layout({
+      view: "day",
+      appointments: [
+        { id: "missing-start", status: "confirmed", professionalId: "ana" } as Appointment,
+        { ...at("10:00", 0, "ana", "zero-duration") },
+        at("11:00", 30, "ana", "valid"),
+      ],
+      blocks: [
+        { id: "bad-block", date: "2026-08-10", startTime: "nope", endTime: "10:00" },
+      ] as Block[],
+    });
+
+    expect(model.events.map((event) => event.id)).toEqual(["valid"]);
+    expect(model.events[0].top).toBeTypeOf("number");
+  });
+
   it("prefers the professional's colour over the appointment's own", () => {
     const model = layout({
       view: "day",

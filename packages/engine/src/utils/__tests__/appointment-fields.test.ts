@@ -4,6 +4,8 @@ import {
   getAppointmentBufferAfterMinutes,
   getAppointmentBufferBeforeMinutes,
   getAppointmentServicesCount,
+  hasValidAppointmentTiming,
+  hasValidBlockTiming,
   normalizeAppointment,
 } from "../appointment-fields";
 import { getAppointmentServiceLabel } from "../format";
@@ -108,5 +110,28 @@ describe("appointment field normalization", () => {
     expect(getAppointmentServicesCount(appointment, 3)).toBe(3);
     expect(normalized.servicesCount).toBeUndefined();
     expect(getAppointmentServiceLabel(normalized, true)).toBe("Consultation +2");
+  });
+
+  it("rejects appointment and block timing that would poison layout math", () => {
+    expect(hasValidAppointmentTiming({
+      id: "bad-time",
+      status: "confirmed",
+      clientName: "No time",
+    })).toBe(false);
+    expect(hasValidAppointmentTiming({
+      id: "zero-duration",
+      startsAt: "2026-08-12T14:00:00.000Z",
+      durationMinutes: 0,
+      status: "confirmed",
+    })).toBe(false);
+    expect(hasValidAppointmentTiming({
+      id: "good-time",
+      startsAt: "2026-08-12T14:00:00.000Z",
+      durationMinutes: 30,
+      status: "confirmed",
+    })).toBe(true);
+
+    expect(hasValidBlockTiming({ id: "bad-block", date: "2026-08-12", startTime: "nope", endTime: "10:00" })).toBe(false);
+    expect(hasValidBlockTiming({ id: "good-block", date: "2026-08-12", startTime: "09:00", endTime: "10:00" })).toBe(true);
   });
 });

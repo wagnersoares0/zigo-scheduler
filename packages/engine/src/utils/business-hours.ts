@@ -197,8 +197,10 @@ export const getEffectiveBusinessHoursForDay = ({
   const closesAt = normalizeHHMM(weekdayHours?.closesAt ?? weekdayHours?.fechamento) ?? defaultClosesAt;
   const startMinute = toMin(opensAt);
   const endMinuteRaw = toMin(closesAt);
-  const endMinute = endMinuteRaw > startMinute ? endMinuteRaw : startMinute + 60;
-  const isClosed = weekdayHours ? isInactiveFlag(isActiveDayFlag(weekdayHours)) : false;
+  const crossesMidnight = endMinuteRaw <= startMinute;
+  const endMinute = crossesMidnight ? startMinute : endMinuteRaw;
+  const isClosedByFlag = weekdayHours ? isInactiveFlag(isActiveDayFlag(weekdayHours)) : false;
+  const isClosed = isClosedByFlag || crossesMidnight;
 
   return {
     startMinute,
@@ -208,7 +210,11 @@ export const getEffectiveBusinessHoursForDay = ({
     abertura: opensAt,
     fechamento: closesAt,
     isClosed,
-    closedMessage: isClosed ? "This day is closed on the schedule." : undefined,
+    closedMessage: crossesMidnight
+      ? "Business hours cannot cross midnight. Split overnight shifts into separate days."
+      : isClosed
+        ? "This day is closed on the schedule."
+        : undefined,
   };
 };
 

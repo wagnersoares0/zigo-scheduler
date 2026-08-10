@@ -7,6 +7,42 @@ first public release is cut.
 
 ## [Unreleased]
 
+## [0.2.10] - 2026-08-10
+
+### Added
+
+- React grid overflow buttons now open the hidden appointments instead of only
+  showing a dead `+N` indicator.
+- Web Component appointment cards and month entries now support keyboard
+  activation with Enter and Space.
+
+### Fixed
+
+- React range selection now commits `onSelectRange` after dragging an empty
+  slot.
+- React advanced event callbacks now resolve appointment and block event inputs
+  in the scheduler's configured time zone.
+- React drag and resize failures now revert visually and surface a mutation
+  error instead of leaving an unhandled promise rejection.
+- Canceled appointments no longer block mutation/conflict validation.
+- Web Component drag, resize and range selection now pass through the same
+  engine validation used by React.
+- Web Component gesture cleanup, details sheets and month click listeners are
+  now scoped per instance.
+- Malformed appointment and block timing rows are ignored before layout math
+  instead of poisoning the scheduler with invalid dates or `NaN`.
+- React month weekday labels now follow the configured locale.
+- Web Component built-in details sheets now trap keyboard focus and restore
+  focus to the opener when closed.
+- Business hours that cross midnight are now rejected with a clear closed-day
+  message instead of being converted to a fake one-hour working day.
+- RRULE expansion now stops through the iterator instead of materializing a huge
+  recurrence list before applying the configured limit.
+
+### Changed
+
+- The lint debt gate now tracks the current 106-warning baseline.
+
 ## [0.2.9] - 2026-08-10
 
 ### Fixed

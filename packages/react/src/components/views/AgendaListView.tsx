@@ -35,7 +35,7 @@ import {
   useAgendaEventRender,
   useAgendaEventTooltip,
 } from "../events/AgendaEventContent";
-import { useAgendaLocale, useAgendaMessages } from "../../config/AgendaConfigContext";
+import { useAgendaLocale, useAgendaMessages, useAgendaTimeZone } from "../../config/AgendaConfigContext";
 
 export type AgendaListViewProps = {
   agendaRowsByDay: [string, AgendaListRow[]][];
@@ -83,6 +83,7 @@ const AgendaListEventRow = memo(function AgendaListEventRow({
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const locale = useAgendaLocale();
   const messages = useAgendaMessages();
+  const timeZone = useAgendaTimeZone();
   const isCanceled = isCanceledStatus(row.status);
   const profId =
     row.kind === "appointment" ? row.ag?.profissional_id : row.bloq?.profissional_id;
@@ -109,9 +110,9 @@ const AgendaListEventRow = memo(function AgendaListEventRow({
   );
   const event =
     row.kind === "appointment" && row.ag
-      ? appointmentToAgendaEventInput(row.ag)
+      ? appointmentToAgendaEventInput(row.ag, timeZone)
       : row.kind === "block" && row.bloq
-        ? blockToAgendaEventInput(row.bloq)
+        ? blockToAgendaEventInput(row.bloq, timeZone)
         : null;
   const fallbackEvent = event;
   const { dispatchMouseEnter, dispatchMouseLeave, optionClassName, renderArg } =

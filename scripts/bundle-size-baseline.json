@@ -1,12 +1,12 @@
 {
   "packages/core/dist/index.js": 37050,
-  "packages/engine/dist/index.js": 118045,
-  "packages/recurrence/dist/index.js": 104484,
-  "packages/layout/dist/index.js": 20021,
+  "packages/engine/dist/index.js": 118954,
+  "packages/recurrence/dist/index.js": 104543,
+  "packages/layout/dist/index.js": 20187,
   "packages/interaction/dist/index.js": 16588,
-  "packages/element/dist/index.js": 51424,
-  "packages/react/dist/index.js": 212540,
+  "packages/element/dist/index.js": 59469,
+  "packages/react/dist/index.js": 218051,
   "packages/react/dist/styles.css": 35979,
-  "packages/element/dist/zigo-scheduler.global.js": 70915,
-  "packages/recurrence/dist/zigo-scheduler-recurrence.global.js": 54294
+  "packages/element/dist/zigo-scheduler.global.js": 82101,
+  "packages/recurrence/dist/zigo-scheduler-recurrence.global.js": 54307
 }

@@ -228,6 +228,20 @@ describe("range window", () => {
     });
     expect(occurrences).toHaveLength(10);
   });
+
+  it("applies the limit while iterating dense rules", () => {
+    const occurrences = expandRecurrence({
+      rule: "FREQ=MINUTELY",
+      startsAt: at("2026-01-01", "09:00"),
+      durationMinutes: 15,
+      timeZone: SP,
+      range: windowFor("2026-01-01", "2026-01-31"),
+      limit: 5,
+    });
+
+    expect(occurrences).toHaveLength(5);
+    expect(occurrences.map((o) => o.index)).toEqual([0, 1, 2, 3, 4]);
+  });
 });
 
 describe("invalid input", () => {

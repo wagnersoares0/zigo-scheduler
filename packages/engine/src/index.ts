@@ -112,6 +112,8 @@ export {
   getServiceDurationMinutes,
   getServiceName,
   getServicePrice,
+  hasValidAppointmentTiming,
+  hasValidBlockTiming,
 } from "./utils/appointment-fields";
 export {
   DAY_CANCELED_CARD_THEME,

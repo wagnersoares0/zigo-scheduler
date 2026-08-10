@@ -2,9 +2,10 @@ import type { AgendaLayout, AgendaLayoutEvent } from "@zigoschedule/scheduler-la
 import type { Professional } from "@zigoschedule/scheduler-engine";
 import { getAgendaMessages, type AgendaMessages } from "@zigoschedule/scheduler-core";
 import { el, px } from "./dom";
-import { attachGestures, releaseGestures, type GestureCallbacks } from "./gestures";
+import { attachGestures, type GestureCallbacks } from "./gestures";
 import { attachRangeSelection, type RangeSelection } from "./selection";
 import { attachInteractions, syncHeaderScroll, type AgendaCallbacks } from "./interactions";
+import { releaseRenderCleanup, setRenderCleanup } from "./render-cleanup";
 import { buildAxis } from "./parts/axis";
 import { buildEventCard } from "./parts/event-card";
 import { buildGridLines } from "./parts/grid-lines";
@@ -33,7 +34,7 @@ export function renderAgenda(
 ): void {
   // Every render rebuilds the DOM, so the gestures bound to the old nodes
   // have to be released or their listeners leak.
-  releaseGestures();
+  releaseRenderCleanup(root);
 
   // Preserve the user's scroll position before replacing the DOM.
   const prev = root.querySelector<HTMLElement>(".za-scroller");
@@ -77,10 +78,11 @@ export function renderAgenda(
   scroller.appendChild(surface);
   root.appendChild(scroller);
 
-  attachGestures(canvas, scroller, layout, events, callbacks);
+  const cleanups = [attachGestures(canvas, scroller, layout, events, callbacks)];
   if (callbacks.onSelectRange) {
-    attachRangeSelection(canvas, layout, callbacks.onSelectRange);
+    cleanups.push(attachRangeSelection(canvas, layout, callbacks.onSelectRange));
   }
+  setRenderCleanup(root, () => cleanups.forEach((cleanup) => cleanup()));
 
   const track = header.querySelector(".za-header-track");
   if (track instanceof HTMLElement) syncHeaderScroll(scroller, track);

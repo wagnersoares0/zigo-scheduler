@@ -6,7 +6,7 @@ import type {
   ProfessionalDaySchedule,
   Service,
 } from "../types";
-import { first } from "./time";
+import { first, isValidHHMM, toMin } from "./time";
 
 type MaybeText = string | null | undefined;
 type ServiceLike = {
@@ -30,6 +30,8 @@ const numberLike = (value: string | number | null | undefined): number | null =>
   const normalized = typeof value === "number" ? value : typeof value === "string" ? Number(value) : NaN;
   return Number.isFinite(normalized) ? normalized : null;
 };
+
+const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
 export function getProfessionalName(professional: Professional | null | undefined): string {
   return text(professional?.name) ?? text(professional?.nome) ?? "";
@@ -90,6 +92,13 @@ export function getAppointmentStartsAt(appointment: Appointment): string {
 
 export function getAppointmentDurationMinutes(appointment: Appointment, fallback = 30): number {
   return numberValue(appointment.durationMinutes) ?? numberValue(appointment.duracao_minutos) ?? fallback;
+}
+
+export function hasValidAppointmentTiming(appointment: Appointment): boolean {
+  const startsAt = getAppointmentStartsAt(appointment);
+  return Boolean(startsAt) &&
+    Number.isFinite(new Date(startsAt).getTime()) &&
+    getAppointmentDurationMinutes(appointment, 0) > 0;
 }
 
 const minutesOrZero = (value: number | null): number =>
@@ -207,6 +216,16 @@ export function getBlockStartTime(block: Block): string {
 
 export function getBlockEndTime(block: Block): string {
   return text(block.endTime) ?? text(block.hora_fim) ?? "00:00";
+}
+
+export function hasValidBlockTiming(block: Block): boolean {
+  const date = getBlockDate(block);
+  const startTime = getBlockStartTime(block);
+  const endTime = getBlockEndTime(block);
+  return DAY_KEY.test(date) &&
+    isValidHHMM(startTime) &&
+    isValidHHMM(endTime) &&
+    toMin(endTime) > toMin(startTime);
 }
 
 export function getBlockReason(block: Block | null | undefined): string | null {

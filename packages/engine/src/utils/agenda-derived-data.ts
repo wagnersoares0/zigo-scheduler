@@ -11,6 +11,8 @@ import {
   getBlockReason,
   getBlockStartTime,
   getProfessionalName,
+  hasValidAppointmentTiming,
+  hasValidBlockTiming,
   normalizeAppointment,
   normalizeBlock,
   normalizeProfessional,
@@ -63,6 +65,7 @@ export function groupAppointmentsByDay(
   const map = new Map<string, Appointment[]>();
   appointments.forEach((ag) => {
     if (options.excludeCanceled && isCanceledStatus(ag.status)) return;
+    if (!hasValidAppointmentTiming(ag)) return;
     const dayKey = zoneKey(getAppointmentStartsAt(ag), timeZone);
     if (!map.has(dayKey)) map.set(dayKey, []);
     map.get(dayKey)!.push(ag);
@@ -73,6 +76,7 @@ export function groupAppointmentsByDay(
 export function groupBlocksByDay(blocks: Block[]): Map<string, Block[]> {
   const map = new Map<string, Block[]>();
   blocks.forEach((bloq) => {
+    if (!hasValidBlockTiming(bloq)) return;
     const dayKey = getBlockDate(bloq);
     if (!map.has(dayKey)) map.set(dayKey, []);
     map.get(dayKey)!.push(bloq);
@@ -100,7 +104,7 @@ export function buildAgendaListRows({
   const normalizedProfessionals = (professionals ?? profissionais ?? []).map(normalizeProfessional);
   const professionalNameById = new Map(normalizedProfessionals.map((prof) => [prof.id, getProfessionalName(prof)]));
 
-  appointments.map(normalizeAppointment).forEach((ag) => {
+  appointments.filter(hasValidAppointmentTiming).map(normalizeAppointment).forEach((ag) => {
     const startsAt = getAppointmentStartsAt(ag);
     const professionalId = getAppointmentProfessionalId(ag);
     const start = zoneMins(startsAt, timeZone);
@@ -130,7 +134,7 @@ export function buildAgendaListRows({
     });
   });
 
-  blocks.map(normalizeBlock).forEach((bloq) => {
+  blocks.filter(hasValidBlockTiming).map(normalizeBlock).forEach((bloq) => {
     const dayKey = getBlockDate(bloq);
     const professionalId = getBlockProfessionalId(bloq);
     const clientName = "Blocked time";

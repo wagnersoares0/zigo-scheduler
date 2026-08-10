@@ -36,6 +36,7 @@ import {
   getProfessionalName,
   getProfessionalBusinessHoursRange,
   getProfessionalBreakWindowForDay,
+  hasValidBlockTiming,
   toHHMM,
   toMin,
   weekDays,
@@ -289,7 +290,7 @@ export function buildAgendaLayout(input: AgendaLayoutInput): AgendaLayout {
     });
   }
 
-  for (const block of blocks) {
+  for (const block of blocks.filter(hasValidBlockTiming)) {
     // A block without a professional belongs to the whole business.
     const blockDate = getBlockDate(block);
     const target = getBlockProfessionalId(block);

@@ -26,9 +26,11 @@ import {
 } from "@zigoschedule/scheduler-engine";
 import type { Appointment, Block, BusinessHours, BreakWindow, Professional } from "@zigoschedule/scheduler-engine";
 import { closeDetails, openDetails, type DetailsData } from "./parts/details";
+import { releaseRenderCleanup } from "./render-cleanup";
 import { renderAgenda } from "./render";
 import { renderAgendaMonth } from "./render-month";
 import { STYLES } from "./styles";
+import { createValidatedInteractions } from "./validated-interactions";
 
 type Data = {
   appointments: Appointment[];
@@ -53,47 +55,14 @@ const number = (value: string | null): number | undefined => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 };
 
-/**
- * Base class, with an empty shell when no DOM exists.
- *
- * `class X extends HTMLElement` is evaluated as soon as the module loads. In a
- * DOM-free environment (Next.js server render, a sandbox build step, or a Node
- * test), `HTMLElement` does not exist and the import fails with
- * "HTMLElement is not defined" before any of our code can run.
- *
- * That is one of the most common reasons a web component package does not open
- * in CodeSandbox or StackBlitz.
- *
- * The shell is never instantiated outside the browser: `customElements.define`
- * is already guarded. This only makes importing the package safe.
- */
+/** Empty base keeps importing the package safe without a browser DOM. */
 const ElementBase = (
   typeof HTMLElement === "undefined" ? class {} : HTMLElement
 ) as typeof HTMLElement;
 
-/**
- * `<zigo-scheduler>` - the calendar as an HTML tag.
- *
- * Configuration that fits in a string arrives as an attribute; data arrives as
- * a property, because arrays do not belong in HTML. That split is what makes it
- * usable from a server-rendered page and from a framework alike.
- *
- * Nothing here imports React. The element renders through the layout model.
- */
+/** `<zigo-scheduler>`: React-free calendar as an HTML tag. */
 export class ZigoSchedulerElement extends ElementBase {
-  static observedAttributes = [
-    "view",
-    "date",
-    "timezone",
-    "slot-minutes",
-    "week-scale",
-    "row-height",
-    "column-min-width",
-    "scroll-to-now",
-    "week-starts-on",
-    "locale",
-    "details",
-  ];
+  static observedAttributes = ["view", "date", "timezone", "slot-minutes", "week-scale", "row-height", "column-min-width", "scroll-to-now", "week-starts-on", "locale", "details"];
 
   #root: ShadowRoot;
   #surface: HTMLElement;
@@ -114,15 +83,7 @@ export class ZigoSchedulerElement extends ElementBase {
     this.#root.append(style, this.#surface);
   }
 
-  /**
-   * Rescues a property set before the element was defined.
-   *
-   * A server-rendered page usually loads the element with a deferred module
-   * script and then assigns data from an inline script, which runs first. The
-   * assignment lands as an own property on the instance and shadows the setter
-   * forever, so the calendar comes up empty. Deleting it and reassigning routes
-   * the value through the accessor.
-   */
+  /** Routes properties assigned before customElements.define back through setters. */
   #upgradeProperty(name: keyof Data): void {
     if (!Object.prototype.hasOwnProperty.call(this, name)) return;
     const value = (this as unknown as Record<string, unknown>)[name];
@@ -144,6 +105,8 @@ export class ZigoSchedulerElement extends ElementBase {
 
   disconnectedCallback(): void {
     this.#observer?.disconnect();
+    releaseRenderCleanup(this.#surface);
+    closeDetails(this.#surface);
   }
 
   attributeChangedCallback(): void {
@@ -243,16 +206,7 @@ export class ZigoSchedulerElement extends ElementBase {
     return this.getAttribute("details") !== "off";
   }
 
-  /**
-   * Original appointment behind a card.
-   *
-   * The layout model carries only what the grid needs to draw. Phone, notes and
-   * price come from the host appointment payload.
-   *
-   * A recurring occurrence is not in the original list: it was created by the
-   * expander. When the exact id is not found, fall back to the series id. The
-   * customer data is the same; the time comes from the layout model.
-   */
+  /** Original appointment behind a card, with recurrence fallback. */
   #appointmentOf(id: string): Appointment | undefined {
     const exact = this.#data.appointments.find((ag) => ag.id === id);
     if (exact) return exact;
@@ -342,7 +296,7 @@ export class ZigoSchedulerElement extends ElementBase {
 
     // Redraw rebuilds the full DOM. An open sheet would be anchored to a node
     // that no longer exists.
-    closeDetails();
+    closeDetails(this.#surface);
 
     if (this.getAttribute("view") === "month") {
       renderAgendaMonth(
@@ -376,15 +330,22 @@ export class ZigoSchedulerElement extends ElementBase {
       ? zonedNow(timeZone).minute
       : undefined;
 
-    renderAgenda(this.#surface, buildAgendaLayout(input), {
+    const layout = buildAgendaLayout(input);
+    const interactions = createValidatedInteractions(
+      input,
+      layout.stepMinutes,
+      (name, detail) => this.#emit(name, detail),
+    );
+
+    renderAgenda(this.#surface, layout, {
       onSelectEvent: (event, native) => {
         this.#showDetails(event);
         this.#emit("select-event", { event, native });
       },
       onSelectSlot: (hit, native) => this.#emit("select-slot", { hit, native }),
-      onMove: (change) => this.#emit("move-event", change),
-      onResize: (change) => this.#emit("resize-event", change),
-      onSelectRange: (range) => this.#emit("select-range", range),
+      onMove: interactions.onMove,
+      onResize: interactions.onResize,
+      onSelectRange: interactions.onSelectRange,
       professionals: this.#data.professionals,
       scrollToMinute,
       messages: getAgendaMessages(input.locale, this.#messages),

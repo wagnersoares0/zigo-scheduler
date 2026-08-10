@@ -75,6 +75,26 @@ const render = (props: Partial<Parameters<typeof Agenda>[0]> = {}) =>
     />
   );
 
+const pointer = (
+  type: string,
+  props: PointerEventInit,
+): PointerEvent => {
+  return new PointerEvent(type, { bubbles: true, cancelable: true, ...props });
+};
+
+const rect = (left: number, top: number, width: number, height: number) =>
+  ({
+    left,
+    top,
+    width,
+    height,
+    right: left + width,
+    bottom: top + height,
+    x: left,
+    y: top,
+    toJSON: () => ({}),
+  }) as DOMRect;
+
 describe("Agenda", () => {
   it("renders with nothing but an array of appointments", () => {
     const html = render();
@@ -196,6 +216,76 @@ describe("Agenda", () => {
     expect(html).not.toContain("Lunch / Break");
   });
 
+  it("commits a range selection after dragging an empty slot", async () => {
+    const container = document.createElement("div");
+    container.style.height = "720px";
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    const selected: Array<{ dayKey: string; startMinute: number; endMinute: number; professionalId: string | null }> = [];
+
+    try {
+      await act(async () => {
+        root.render(
+          <Agenda
+            date={MONDAY}
+            appointments={[]}
+            professionals={[PROFESSIONALS[0]]}
+            businessHours={BUSINESS_HOURS}
+            timeZone={TIME_ZONE}
+            view="day"
+            blockPastSlots={false}
+            onSelectRange={(range) => selected.push(range)}
+          />
+        );
+      });
+
+      const scroller = container.querySelector<HTMLDivElement>('[data-agenda-scroll="true"]');
+      const column = container.querySelector<HTMLDivElement>('[data-dnd-prof="ana"]');
+      expect(scroller).toBeTruthy();
+      expect(column).toBeTruthy();
+
+      Object.defineProperty(scroller, "clientHeight", { value: 600, configurable: true });
+      Object.defineProperty(column, "clientHeight", { value: 600, configurable: true });
+      Object.defineProperty(column, "offsetTop", { value: 0, configurable: true });
+      scroller!.getBoundingClientRect = () => rect(0, 0, 720, 600);
+      column!.getBoundingClientRect = () => rect(80, 0, 260, 600);
+
+      await act(async () => {
+        column!.dispatchEvent(pointer("pointerdown", {
+          button: 0,
+          pointerId: 1,
+          pointerType: "mouse",
+          clientX: 120,
+          clientY: 10,
+        }));
+        column!.dispatchEvent(pointer("pointermove", {
+          pointerId: 1,
+          pointerType: "mouse",
+          clientX: 120,
+          clientY: 90,
+        }));
+        column!.dispatchEvent(pointer("pointerup", {
+          pointerId: 1,
+          pointerType: "mouse",
+          clientX: 120,
+          clientY: 90,
+        }));
+      });
+
+      expect(selected).toHaveLength(1);
+      expect(selected[0]).toMatchObject({
+        dayKey: "2026-08-03",
+        professionalId: "ana",
+      });
+      expect(selected[0].endMinute).toBeGreaterThan(selected[0].startMinute);
+    } finally {
+      await act(async () => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+
   it("opens the built-in details modal when the host does not own clicks", async () => {
     const container = document.createElement("div");
     container.style.height = "720px";
@@ -228,6 +318,53 @@ describe("Agenda", () => {
       expect(dialog?.textContent).toContain("Maya Lee");
       expect(dialog?.textContent).toContain("Consultation");
       expect(dialog?.textContent).toContain("Ref.");
+    } finally {
+      await act(async () => {
+        root.unmount();
+      });
+      container.remove();
+    }
+  });
+
+  it("opens hidden grid appointments from the more button", async () => {
+    const container = document.createElement("div");
+    container.style.height = "720px";
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    const crowdedAppointments: Appointment[] = Array.from({ length: 4 }, (_, index) => ({
+      ...APPOINTMENTS[0],
+      id: `crowded-${index + 1}`,
+      cliente_nome: `Client ${index + 1}`,
+      data_hora: at("2026-08-03", "09:00"),
+      profissional_id: "ana",
+    }));
+
+    try {
+      await act(async () => {
+        root.render(
+          <Agenda
+            date={MONDAY}
+            appointments={crowdedAppointments}
+            professionals={[PROFESSIONALS[0]]}
+            businessHours={BUSINESS_HOURS}
+            timeZone={TIME_ZONE}
+            view="day"
+          />
+        );
+      });
+
+      const more = container.querySelector<HTMLButtonElement>(
+        'button[aria-label="View 1 more appointment"]',
+      );
+      expect(more).toBeTruthy();
+      more!.getBoundingClientRect = () => rect(120, 140, 88, 24);
+
+      await act(async () => {
+        more!.click();
+      });
+
+      const dialog = container.querySelector<HTMLElement>('[role="dialog"]');
+      expect(dialog?.textContent).toContain("Client 4");
     } finally {
       await act(async () => {
         root.unmount();
