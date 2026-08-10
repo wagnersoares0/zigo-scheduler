@@ -165,6 +165,37 @@ describe("Agenda", () => {
     expect(html.length).toBeGreaterThan(0);
   });
 
+  it("does not reopen an explicitly inactive professional with business hours", () => {
+    const html = render({
+      appointments: [],
+      professionals: [
+        {
+          id: "ana",
+          nome: "Ana",
+          horarios_profissional: [{ dia_semana: 1, ativo: false }],
+        },
+      ],
+    });
+
+    expect(html).toContain("Closed");
+  });
+
+  it("does not reapply the shared break when the professional opts out", () => {
+    const html = render({
+      appointments: [],
+      professionals: [
+        {
+          id: "ana",
+          nome: "Ana",
+          horarios_profissional: [{ dia_semana: 1, ativo: true, tem_pausa: false }],
+        },
+      ],
+      lunchBreak: { inicioMin: 720, fimMin: 780, inicioHHMM: "12:00", fimHHMM: "13:00" },
+    });
+
+    expect(html).not.toContain("Lunch / Break");
+  });
+
   it("opens the built-in details modal when the host does not own clicks", async () => {
     const container = document.createElement("div");
     container.style.height = "720px";

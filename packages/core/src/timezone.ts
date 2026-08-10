@@ -156,7 +156,22 @@ export function zonedTimeToUtc(dateYmd: string, minutes: number, timeZone: TimeZ
 
   const firstPass = naive - offsetMs(new Date(naive), timeZone);
   const secondPass = naive - offsetMs(new Date(firstPass), timeZone);
-  return new Date(secondPass);
+  const result = new Date(secondPass);
+  const check = zonedParts(result, timeZone);
+  const expectedHour = Math.floor(minutes / 60);
+  const expectedMinute = minutes % 60;
+  if (
+    check.year !== year ||
+    check.month !== month ||
+    check.day !== day ||
+    check.hour !== expectedHour ||
+    check.minute !== expectedMinute
+  ) {
+    throw new RangeError(
+      `Wall-clock time ${dateYmd} ${String(expectedHour).padStart(2, "0")}:${String(expectedMinute).padStart(2, "0")} does not exist in ${timeZone}.`
+    );
+  }
+  return result;
 }
 
 /**

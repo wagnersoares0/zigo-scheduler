@@ -56,6 +56,12 @@ describe("zonedTimeToUtc", () => {
     );
   });
 
+  it("rejects a wall-clock time that does not exist during spring-forward DST", () => {
+    expect(() => zonedTimeToUtc("2026-03-08", 2 * 60 + 30, NEW_YORK)).toThrow(
+      /does not exist/
+    );
+  });
+
   it("survives the fall-back DST transition", () => {
     // New York falls back 2026-11-01. 01:00 happens twice; we resolve to the
     // first occurrence (still EDT, UTC-4) — deterministic, which is what matters.

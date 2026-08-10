@@ -35,6 +35,7 @@ import {
   getGridBusinessHoursRange,
   getProfessionalName,
   getProfessionalBusinessHoursRange,
+  getProfessionalBreakWindowForDay,
   toHHMM,
   toMin,
   weekDays,
@@ -202,9 +203,11 @@ export function buildAgendaLayout(input: AgendaLayoutInput): AgendaLayout {
   const columns: AgendaLayoutColumn[] = seeds.map((seed, index) => {
     const dayKey = dateKey(seed.day);
     const dayHours = hoursForDay(dayKey);
-    const scoped = seed.professional
-      ? getProfessionalBusinessHoursRange(dayHours, seed.professional, dayKey) ?? dayHours
+    const professionalHours = seed.professional
+      ? getProfessionalBusinessHoursRange(dayHours, seed.professional, dayKey)
       : dayHours;
+    const scoped = professionalHours ?? { startMinute: dayHours.startMinute, endMinute: dayHours.startMinute };
+    const isClosed = Boolean(dayHours.isClosed || professionalHours === null);
 
     return {
       key: seed.professional ? `${dayKey}-${seed.professional.id}` : dayKey,
@@ -214,9 +217,9 @@ export function buildAgendaLayout(input: AgendaLayoutInput): AgendaLayout {
       sublabel: shortDate(seed.day, locale),
       left: axisWidth + index * columnWidth,
       width: columnWidth,
-      isClosed: Boolean(dayHours.isClosed),
-      closedLabel: dayHours.isClosed ? messages.closed : null,
-      closedMessage: dayHours.isClosed ? messages.closed : null,
+      isClosed,
+      closedLabel: isClosed ? messages.closed : null,
+      closedMessage: isClosed ? messages.closed : null,
       openStartMinute: scoped.startMinute,
       openEndMinute: scoped.endMinute,
     };
@@ -419,9 +422,15 @@ export function buildAgendaLayout(input: AgendaLayoutInput): AgendaLayout {
         visualEndMinute
       );
     }
-    if (lunchBreak) {
-      const lunchStart = getBreakStartMinute(lunchBreak);
-      const lunchEnd = getBreakEndMinute(lunchBreak);
+    const columnProfessional = column.professionalId
+      ? professionals.find((professional) => professional.id === column.professionalId)
+      : null;
+    const columnBreak = columnProfessional
+      ? getProfessionalBreakWindowForDay({ lunchBreak, professional: columnProfessional, dayKey: column.dayKey })
+      : lunchBreak;
+    if (columnBreak) {
+      const lunchStart = getBreakStartMinute(columnBreak);
+      const lunchEnd = getBreakEndMinute(columnBreak);
       if (lunchStart !== null && lunchEnd !== null) {
         addUnavailable(column, "lunch", messages.lunchBreak, lunchStart, lunchEnd);
       }

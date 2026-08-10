@@ -7,6 +7,19 @@ first public release is cut.
 
 ## [Unreleased]
 
+## [0.2.9] - 2026-08-10
+
+### Fixed
+
+- Professional-specific inactive days now stay closed in React and headless
+  layout instead of inheriting the business's default hours.
+- Professional-specific break opt-outs now stay respected instead of falling
+  back to the shared business break.
+- React now keeps its current-day/current-time calculations fresh while the
+  scheduler remains open.
+- DST spring-forward wall-clock times that do not exist are now rejected instead
+  of being silently shifted to another instant.
+
 ## [0.2.8] - 2026-08-10
 
 ### Changed

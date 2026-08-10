@@ -54,7 +54,7 @@ With a CDN:
 
 ```html
 <script type="module"
-  src="https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.2.8/dist/zigo-scheduler.global.js"></script>
+  src="https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.2.9/dist/zigo-scheduler.global.js"></script>
 ```
 
 ## Minimal Example

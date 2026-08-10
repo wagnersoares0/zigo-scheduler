@@ -143,6 +143,27 @@ describe("columns", () => {
     expect(model.columns[0].closedLabel).toBeTruthy();
   });
 
+  it("keeps an explicitly inactive professional closed instead of inheriting business hours", () => {
+    const model = layout({
+      view: "day",
+      professionals: [
+        {
+          id: "ana",
+          nome: "Ana Ribeiro",
+          horarios_profissional: [{ dia_semana: 1, ativo: false }],
+        },
+      ],
+    });
+
+    expect(model.columns[0]).toMatchObject({
+      professionalId: "ana",
+      isClosed: true,
+      openStartMinute: 540,
+      openEndMinute: 540,
+    });
+    expect(model.unavailable.find((item) => item.reason === "closed")).toBeTruthy();
+  });
+
   it("separates the short header badge from the full body message", () => {
     // One field used to serve both places, and the full sentence overflowed the
     // header. These are different text sizes because they live in different
@@ -348,6 +369,22 @@ describe("unavailable stretches", () => {
     expect(lunch).toHaveLength(2);
     expect(lunch[0]).toMatchObject({ startMinute: 720, endMinute: 780 });
     expect(lunch[0].top).toBe(model.minuteToY(720));
+  });
+
+  it("lets a professional explicitly opt out of the shared break", () => {
+    const model = layout({
+      view: "day",
+      professionals: [
+        {
+          id: "ana",
+          nome: "Ana Ribeiro",
+          horarios_profissional: [{ dia_semana: 1, ativo: true, tem_pausa: false }],
+        },
+      ],
+      lunchBreak: { inicioMin: 720, fimMin: 780, inicioHHMM: "12:00", fimHHMM: "13:00" },
+    });
+
+    expect(model.unavailable.filter((item) => item.reason === "lunch")).toHaveLength(0);
   });
 
   it("covers a closed day whole", () => {

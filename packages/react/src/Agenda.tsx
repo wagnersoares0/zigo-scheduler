@@ -70,6 +70,7 @@ import {
   type AppointmentColor,
   type AppointmentColorMode,
 } from "@zigoschedule/scheduler-core";
+import { useAgendaClock } from "./hooks/useAgendaClock";
 
 /**
  * The calendar, assembled.
@@ -330,7 +331,7 @@ export const Agenda = memo(function Agenda({
       const professional = professionals.find((prof) => prof.id === professionalId);
       if (!professional) return dayHours;
       // A professional with no schedule of their own follows the business.
-      return getProfessionalBusinessHoursRange(dayHours, professional, dayKey) ?? dayHours;
+      return getProfessionalBusinessHoursRange(dayHours, professional, dayKey);
     },
     [hoursForDay, professionals]
   );
@@ -339,13 +340,11 @@ export const Agenda = memo(function Agenda({
     (dayKey: string, professionalId: string | null): BreakWindow | null => {
       const professional = professionals.find((prof) => prof.id === professionalId);
       if (!professional) return lunchBreak;
-      return (
-        getProfessionalBreakWindowForDay({
-          lunchBreak,
-          professional,
-          dayKey,
-        }) ?? lunchBreak
-      );
+      return getProfessionalBreakWindowForDay({
+        lunchBreak,
+        professional,
+        dayKey,
+      });
     },
     [professionals, lunchBreak]
   );
@@ -427,7 +426,8 @@ export const Agenda = memo(function Agenda({
     [onSelectRange]
   );
 
-  const now = useMemo(() => zonedNow(timeZone), [timeZone]);
+  const clockTick = useAgendaClock();
+  const now = useMemo(() => zonedNow(timeZone), [timeZone, clockTick]);
 
   const isBeforeToday = useCallback(
     (dayKey: string) => blockPastSlots && dayKey < now.dateKey,

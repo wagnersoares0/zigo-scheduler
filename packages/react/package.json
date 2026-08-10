@@ -1,6 +1,6 @@
 {
   "name": "@zigoschedule/scheduler-react",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "React professional scheduler with resource columns, drag/drop, resize, business hours, buffers, time zones and DST-safe appointments.",
   "license": "MIT",
   "author": "Wagner Silva <contato@zigoapp.com.br>",
@@ -8,10 +8,10 @@
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@zigoschedule/scheduler-core": "^0.2.8",
-    "@zigoschedule/scheduler-engine": "^0.2.8",
-    "@zigoschedule/scheduler-layout": "^0.2.8",
-    "@zigoschedule/scheduler-interaction": "^0.2.8"
+    "@zigoschedule/scheduler-core": "^0.2.9",
+    "@zigoschedule/scheduler-engine": "^0.2.9",
+    "@zigoschedule/scheduler-interaction": "^0.2.9",
+    "@zigoschedule/scheduler-layout": "^0.2.9"
   },
   "peerDependencies": {
     "react": ">=18"

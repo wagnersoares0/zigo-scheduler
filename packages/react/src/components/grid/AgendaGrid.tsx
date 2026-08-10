@@ -46,6 +46,7 @@ import { useAgendaGridLayoutModel } from "./useAgendaGridLayoutModel";
 import { useAgendaGridSelectionPreview } from "./useAgendaGridSelectionPreview";
 import { useAgendaGridTimeHoverTooltip } from "./useAgendaGridTimeHoverTooltip";
 import { useAgendaMessages, useAgendaTimeZone } from "../../config/AgendaConfigContext";
+import { useAgendaClock } from "../../hooks/useAgendaClock";
 import { validationMessagesFromAgendaMessages } from "./validationMessages";
 
 const DND_SNAP_MINUTES = 5;
@@ -81,7 +82,7 @@ type Props = {
   getProfessionalBusinessHoursForDay?: (
     dayKey: string,
     profissionalId: string | null,
-  ) => GridBusinessHours;
+  ) => GridBusinessHours | null;
   tenantPausaIntervalo: BreakWindow | null;
   getPausaIntervaloForProfessionalDay?: (
     dayKey: string,
@@ -223,7 +224,8 @@ export const AgendaGrid = memo(function AgendaGrid({
     () => validationMessagesFromAgendaMessages(messages),
     [messages],
   );
-  const brtTodayKey = useMemo(() => zoneNowParts(timeZone).dayKey, [timeZone]);
+  const clockTick = useAgendaClock();
+  const brtTodayKey = useMemo(() => zoneNowParts(timeZone).dayKey, [timeZone, clockTick]);
   const [gridNotice, setGridNotice] = useState<string | null>(null);
   const gridDays = useMemo(() => (days?.length ? days : [date]), [date, days]);
   const gridDayKeys = useMemo(
@@ -278,20 +280,23 @@ export const AgendaGrid = memo(function AgendaGrid({
 
   const getColumnProfessionalBusinessHours = useCallback(
     (dayKey: string, profissionalId: string | null) => {
-      return (
-        getProfessionalBusinessHoursForDay?.(dayKey, profissionalId) ??
-        getColumnBusinessHours(dayKey)
-      );
+      const businessHours = getColumnBusinessHours(dayKey);
+      if (!getProfessionalBusinessHoursForDay) return businessHours;
+      const professionalHours = getProfessionalBusinessHoursForDay?.(dayKey, profissionalId);
+      return professionalHours ?? {
+        ...businessHours,
+        endMinute: businessHours.startMinute,
+        isClosed: true,
+      };
     },
     [getColumnBusinessHours, getProfessionalBusinessHoursForDay],
   );
 
   const getColumnPausaIntervalo = useCallback(
     (dayKey: string, profissionalId: string | null) => {
-      return (
-        getPausaIntervaloForProfessionalDay?.(dayKey, profissionalId) ??
-        tenantPausaIntervalo
-      );
+      return getPausaIntervaloForProfessionalDay
+        ? getPausaIntervaloForProfessionalDay(dayKey, profissionalId)
+        : tenantPausaIntervalo;
     },
     [getPausaIntervaloForProfessionalDay, tenantPausaIntervalo],
   );
@@ -383,10 +388,7 @@ export const AgendaGrid = memo(function AgendaGrid({
         getBusinessHoursForDay: getColumnBusinessHours,
         getResourceBusinessHoursForDay: (resourceId, dayKey) => {
           if (!resourceId) return undefined;
-          return (
-            getProfessionalBusinessHoursForDay?.(dayKey, resourceId) ??
-            undefined
-          );
+          return getProfessionalBusinessHoursForDay?.(dayKey, resourceId);
         },
         breakWindow: tenantPausaIntervalo,
         getResourceBreakWindowForDay: (resourceId, dayKey) => {

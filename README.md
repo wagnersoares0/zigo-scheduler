@@ -259,7 +259,7 @@ simple configuration and properties for arrays or objects.
 </div>
 
 <script type="module">
-  import "https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.2.8/dist/zigo-scheduler.global.js";
+  import "https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.2.9/dist/zigo-scheduler.global.js";
 
   const schedule = document.getElementById("schedule");
 
