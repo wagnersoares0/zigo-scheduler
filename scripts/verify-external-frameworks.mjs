@@ -74,19 +74,62 @@ const freePort = () =>
 const waitForOutput = (child, pattern, label) =>
   new Promise((resolve, reject) => {
     let output = "";
-    const timeout = setTimeout(() => reject(new Error(`${label} did not start\n${output}`)), 30_000);
+    let settled = false;
+    const cleanup = () => {
+      clearTimeout(timeout);
+      child.stdout.off("data", onData);
+      child.stderr.off("data", onData);
+      child.off("exit", onExit);
+    };
+    const timeout = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error(`${label} did not start\n${output}`));
+    }, 30_000);
     const onData = (chunk) => {
       output += chunk.toString();
       const match = output.match(pattern);
       if (!match) return;
-      clearTimeout(timeout);
+      if (settled) return;
+      settled = true;
+      cleanup();
       resolve(match[1]);
+    };
+    const onExit = (code) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (code !== null && code !== 0) reject(new Error(`${label} exited with ${code}\n${output}`));
+      else reject(new Error(`${label} exited before it was ready\n${output}`));
     };
     child.stdout.on("data", onData);
     child.stderr.on("data", onData);
-    child.on("exit", (code) => {
-      if (code !== null && code !== 0) reject(new Error(`${label} exited with ${code}\n${output}`));
+    child.on("exit", onExit);
+  });
+
+const stopServer = (child) =>
+  new Promise((resolve) => {
+    if (child.exitCode !== null || child.signalCode !== null) {
+      resolve();
+      return;
+    }
+
+    const kill = (signal) => {
+      try {
+        if (process.platform !== "win32" && child.pid) process.kill(-child.pid, signal);
+        else child.kill(signal);
+      } catch {
+        // Already gone.
+      }
+    };
+
+    const timeout = setTimeout(() => kill("SIGKILL"), 5_000);
+    child.once("close", () => {
+      clearTimeout(timeout);
+      resolve();
     });
+    kill("SIGTERM");
   });
 
 const withServer = async (label, command, args, cwd, readyPattern, test) => {
@@ -94,13 +137,14 @@ const withServer = async (label, command, args, cwd, readyPattern, test) => {
     cwd,
     env: { ...process.env, NEXT_TELEMETRY_DISABLED: "1" },
     stdio: ["ignore", "pipe", "pipe"],
+    detached: process.platform !== "win32",
   });
   try {
     const url = await waitForOutput(child, readyPattern, label);
     await test(url);
     ok(label, url);
   } finally {
-    child.kill("SIGTERM");
+    await stopServer(child);
   }
 };
 
