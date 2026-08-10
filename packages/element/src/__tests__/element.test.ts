@@ -266,6 +266,106 @@ describe("events", () => {
       expect.objectContaining({ code: "APPOINTMENT_CONFLICT", id: "1" }),
     ]);
   });
+
+  it("emits ISO instants when an appointment moves", () => {
+    const element = mount({ view: "day", date: "2026-08-10", timezone: TIME_ZONE });
+    element.appointments = APPOINTMENTS;
+
+    const moved: unknown[] = [];
+    element.addEventListener("move-event", (e) => moved.push((e as CustomEvent).detail));
+
+    const layout = element.layout!;
+    const event = layout.events.find((item) => item.id === "1")!;
+    const card = shadow(element).querySelector<HTMLElement>("[data-event-id='1']")!;
+    const x = event.left - layout.axisWidth + 8;
+    const startY = event.top + 8;
+    const targetY = layout.minuteToY(12 * 60) + 8;
+
+    card.dispatchEvent(pointer("pointerdown", { clientX: x, clientY: startY }));
+    document.dispatchEvent(pointer("pointermove", { clientX: x, clientY: targetY }));
+    document.dispatchEvent(pointer("pointerup", { clientX: x, clientY: targetY }));
+
+    expect(moved).toEqual([
+      expect.objectContaining({
+        id: "1",
+        startMinute: 12 * 60,
+        startsAt: zonedTimeToUtc("2026-08-10", 12 * 60, TIME_ZONE).toISOString(),
+        endsAt: zonedTimeToUtc("2026-08-10", 13 * 60, TIME_ZONE).toISOString(),
+      }),
+    ]);
+  });
+
+  it("restores a resized card when validation blocks the change", () => {
+    const element = mount({ view: "day", date: "2026-08-10", timezone: TIME_ZONE });
+    element.appointments = [
+      APPOINTMENTS[0],
+      {
+        ...APPOINTMENTS[0],
+        id: "2",
+        data_hora: zonedTimeToUtc("2026-08-10", 11 * 60, TIME_ZONE).toISOString(),
+        cliente_nome: "Noah Carter",
+      },
+    ];
+
+    const resized: unknown[] = [];
+    const blocked: unknown[] = [];
+    element.addEventListener("resize-event", (e) => resized.push((e as CustomEvent).detail));
+    element.addEventListener("blocked-event", (e) => blocked.push((e as CustomEvent).detail));
+
+    const layout = element.layout!;
+    const event = layout.events.find((item) => item.id === "1")!;
+    const card = shadow(element).querySelector<HTMLElement>("[data-event-id='1']")!;
+    const handle = card.querySelector<HTMLElement>("[data-ag-resize-handle]")!;
+    const originalTop = card.style.top;
+    const originalHeight = card.style.height;
+    const x = event.left - layout.axisWidth + 8;
+    const startY = event.top + event.height - 2;
+    const targetY = layout.minuteToY(12 * 60) + 8;
+
+    handle.dispatchEvent(pointer("pointerdown", { clientX: x, clientY: startY }));
+    document.dispatchEvent(pointer("pointermove", { clientX: x, clientY: targetY }));
+    expect(card.style.height).not.toBe(originalHeight);
+    document.dispatchEvent(pointer("pointerup", { clientX: x, clientY: targetY }));
+
+    expect(resized).toHaveLength(0);
+    expect(blocked).toEqual([
+      expect.objectContaining({ code: "APPOINTMENT_CONFLICT", id: "1" }),
+    ]);
+    expect(card.style.top).toBe(originalTop);
+    expect(card.style.height).toBe(originalHeight);
+  });
+
+  it("can block moves into past slots when requested", () => {
+    const element = mount({
+      view: "day",
+      date: "2000-01-03",
+      timezone: TIME_ZONE,
+      "block-past-slots": "",
+    });
+    element.appointments = [{
+      ...APPOINTMENTS[0],
+      data_hora: zonedTimeToUtc("2000-01-03", 10 * 60, TIME_ZONE).toISOString(),
+    }];
+
+    const moved: unknown[] = [];
+    const blocked: unknown[] = [];
+    element.addEventListener("move-event", (e) => moved.push((e as CustomEvent).detail));
+    element.addEventListener("blocked-event", (e) => blocked.push((e as CustomEvent).detail));
+
+    const layout = element.layout!;
+    const event = layout.events.find((item) => item.id === "1")!;
+    const card = shadow(element).querySelector<HTMLElement>("[data-event-id='1']")!;
+    const x = event.left - layout.axisWidth + 8;
+    const startY = event.top + 8;
+    const targetY = layout.minuteToY(11 * 60) + 8;
+
+    card.dispatchEvent(pointer("pointerdown", { clientX: x, clientY: startY }));
+    document.dispatchEvent(pointer("pointermove", { clientX: x, clientY: targetY }));
+    document.dispatchEvent(pointer("pointerup", { clientX: x, clientY: targetY }));
+
+    expect(moved).toHaveLength(0);
+    expect(blocked).toEqual([expect.objectContaining({ code: "PAST_TIME", id: "1" })]);
+  });
   });
 
 describe("data properties", () => {

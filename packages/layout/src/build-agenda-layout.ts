@@ -36,6 +36,7 @@ import {
   getProfessionalName,
   getProfessionalBusinessHoursRange,
   getProfessionalBreakWindowForDay,
+  hasValidAppointmentTiming,
   hasValidBlockTiming,
   toHHMM,
   toMin,
@@ -120,7 +121,7 @@ export function buildAgendaLayout(input: AgendaLayoutInput): AgendaLayout {
   // Repeating appointments become their occurrences before anything is
   // positioned. Without the recurrence plugin this is the identity function.
   const appointments = expandRecurringAppointments(
-    rawAppointments,
+    rawAppointments.filter(hasValidAppointmentTiming),
     timeZone,
     visibleDaysWindow(days, timeZone)
   );

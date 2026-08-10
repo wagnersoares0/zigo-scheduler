@@ -88,7 +88,7 @@ export function attachRangeSelection(
 
     // Same reason as a drag: the pointer release fires a click, which would then
     // be read as "clicked an empty slot" and overwrite what the user just did.
-    markGestureEnd();
+    markGestureEnd(canvas);
 
     const from = Math.min(start.minute, hit.minute);
     const to = Math.max(start.minute, hit.minute) + layout.stepMinutes;

@@ -14,7 +14,7 @@ export type GestureCallbacks = {
     professionalId: string | null;
     startMinute: number;
     durationMinutes: number;
-  }) => void;
+  }) => boolean | void;
   /** Fired after a card's edge is released. */
   onResize?: (change: {
     id: string;
@@ -22,7 +22,7 @@ export type GestureCallbacks = {
     direction: "start" | "end";
     startMinute: number;
     endMinute: number;
-  }) => void;
+  }) => boolean | void;
 };
 
 /**
@@ -39,20 +39,20 @@ export const RESIZE_HANDLE_ATTR = "data-ag-resize-handle";
  * appointment the user just moved. This flag lets the click handler skip the
  * one that follows a gesture.
  */
-let gestureJustEnded = false;
+const gesturesJustEnded = new WeakSet<HTMLElement>();
 
-export const consumeGestureClick = (): boolean => {
-  if (!gestureJustEnded) return false;
-  gestureJustEnded = false;
+export const consumeGestureClick = (scope: HTMLElement): boolean => {
+  if (!gesturesJustEnded.has(scope)) return false;
+  gesturesJustEnded.delete(scope);
   return true;
 };
 
-export const markGestureEnd = (): void => {
-  gestureJustEnded = true;
+export const markGestureEnd = (scope: HTMLElement): void => {
+  gesturesJustEnded.add(scope);
   // Cleared on the next frame: the click follows immediately, anything later is
   // a genuine click.
   setTimeout(() => {
-    gestureJustEnded = false;
+    gesturesJustEnded.delete(scope);
   }, 0);
 };
 
@@ -159,7 +159,7 @@ export function attachGestures(
         onDrop: (result) => {
           card.classList.remove("za-dragging");
           hidePreview(canvas);
-          markGestureEnd();
+          markGestureEnd(canvas);
           callbacks.onMove?.({
             id: result.agId,
             dayKey: result.newDayKey,
@@ -171,7 +171,7 @@ export function attachGestures(
         onDragCancel: () => {
           card.classList.remove("za-dragging");
           hidePreview(canvas);
-          markGestureEnd();
+          markGestureEnd(canvas);
         },
       }
     );
@@ -202,20 +202,24 @@ export function attachGestures(
           card.style.height = px(Math.max(18, layout.minuteToY(to) - top));
         },
         onResizeEnd: (result) => {
-          markGestureEnd();
-          callbacks.onResize?.({
+          markGestureEnd(canvas);
+          const accepted = callbacks.onResize?.({
             id: result.agId,
             dayKey: result.dayKey,
             direction: result.direction,
             startMinute: result.newStartMinute,
             endMinute: result.newEndMinute,
           });
+          if (accepted === false) {
+            card.style.top = px(event.top);
+            card.style.height = px(Math.max(18, event.height));
+          }
         },
         onResizeCancel: () => {
           // Put the card back where it was; the next render redraws it anyway.
           card.style.top = px(event.top);
           card.style.height = px(Math.max(18, event.height));
-          markGestureEnd();
+          markGestureEnd(canvas);
         },
       }
     );

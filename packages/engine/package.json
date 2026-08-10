@@ -1,6 +1,6 @@
 {
   "name": "@zigoschedule/scheduler-engine",
-  "version": "0.2.10",
+  "version": "0.3.0",
   "description": "Pure TypeScript event model, resource scheduling rules, grid geometry and hit testing.",
   "license": "MIT",
   "author": "Wagner Silva <contato@zigoapp.com.br>",
@@ -8,7 +8,7 @@
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@zigoschedule/scheduler-core": "^0.2.10"
+    "@zigoschedule/scheduler-core": "^0.3.0"
   },
   "module": "./dist/index.js",
   "exports": {

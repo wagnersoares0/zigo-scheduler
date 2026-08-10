@@ -132,6 +132,19 @@ describe("appointments in a day", () => {
     expect(sp.cells.find((c) => c.dayKey === "2026-08-12")!.totalCount).toBe(1);
     expect(manaus.cells.find((c) => c.dayKey === "2026-08-11")!.totalCount).toBe(1);
   });
+
+  it("ignores malformed appointments instead of poisoning month geometry", () => {
+    const layout = build({
+      appointments: [
+        { id: "missing-start", status: "confirmed", professionalId: "ana" } as Appointment,
+        { ...at("2026-08-12", "10:00", "zero-duration"), durationMinutes: 0 },
+        at("2026-08-12", "11:00", "valid"),
+      ],
+    });
+    const cell = layout.cells.find((c) => c.dayKey === "2026-08-12")!;
+
+    expect(cell.entries.map((entry) => entry.id)).toEqual(["valid"]);
+  });
 });
 
 describe("portability", () => {

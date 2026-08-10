@@ -62,7 +62,7 @@ const ElementBase = (
 
 /** `<zigo-scheduler>`: React-free calendar as an HTML tag. */
 export class ZigoSchedulerElement extends ElementBase {
-  static observedAttributes = ["view", "date", "timezone", "slot-minutes", "week-scale", "row-height", "column-min-width", "scroll-to-now", "week-starts-on", "locale", "details"];
+  static observedAttributes = ["view", "date", "timezone", "slot-minutes", "week-scale", "row-height", "column-min-width", "scroll-to-now", "week-starts-on", "locale", "details", "block-past-slots"];
 
   #root: ShadowRoot;
   #surface: HTMLElement;
@@ -196,7 +196,7 @@ export class ZigoSchedulerElement extends ElementBase {
       locale: this.getAttribute("locale") ?? undefined,
       messages: this.#messages,
       width,
-      height: height - 48, // the header does not scroll
+      height: Math.max(1, height - 48), // the header does not scroll
       ...this.#data,
     };
   }
@@ -335,6 +335,7 @@ export class ZigoSchedulerElement extends ElementBase {
       input,
       layout.stepMinutes,
       (name, detail) => this.#emit(name, detail),
+      this.hasAttribute("block-past-slots"),
     );
 
     renderAgenda(this.#surface, layout, {

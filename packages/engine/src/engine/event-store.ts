@@ -15,6 +15,7 @@ import {
   getProfessionalClosesAt,
   getProfessionalName,
   getProfessionalOpensAt,
+  hasValidAppointmentTiming,
   normalizeAppointment,
   normalizeBlock,
   normalizeProfessional,
@@ -116,7 +117,10 @@ export const mapAppointmentsByDay = (
   appointmentsByDay.forEach((appointments, dayKey) => {
     // Keep the arrow explicit: passing the function directly would send the
     // array index as the time zone.
-    mapped.set(dayKey, appointments.map((ag) => toAppointmentEvent(ag, timeZone)));
+    mapped.set(
+      dayKey,
+      appointments.filter(hasValidAppointmentTiming).map((ag) => toAppointmentEvent(ag, timeZone))
+    );
   });
 
   return mapped;

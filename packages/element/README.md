@@ -54,7 +54,7 @@ With a CDN:
 
 ```html
 <script type="module"
-  src="https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.2.9/dist/zigo-scheduler.global.js"></script>
+  src="https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.3.0/dist/zigo-scheduler.global.js"></script>
 ```
 
 ## Minimal Example
@@ -73,6 +73,7 @@ With a CDN:
     timezone="America/New_York"
     locale="en-US"
     week-starts-on="0"
+    block-past-slots
   ></zigo-scheduler>
 </div>
 
@@ -106,7 +107,8 @@ With a CDN:
   ];
 
   schedule.addEventListener("move-event", (event) => {
-    // Persist event.detail in your backend.
+    const { id, startsAt, endsAt, professionalId } = event.detail;
+    // Persist the ISO instants and professional in your backend.
   });
 </script>
 ```
@@ -114,8 +116,8 @@ With a CDN:
 ## Attributes
 
 `view`, `date`, `timezone`, `locale`, `slot-minutes`, `week-scale`,
-`row-height`, `column-min-width`, `scroll-to-now`, `week-starts-on` and
-`details`.
+`row-height`, `column-min-width`, `scroll-to-now`, `week-starts-on`, `details`
+and `block-past-slots`.
 
 Use attributes for scalar configuration. Use properties for arrays and objects:
 `appointments`, `professionals`, `businessHours`, `blocks`, `lunchBreak`,
@@ -128,6 +130,9 @@ Use attributes for scalar configuration. Use properties for arrays and objects:
 
 The component never saves data on its own. It emits intent, and the host app
 decides what to save.
+
+`move-event` and `resize-event` include the minute-based fields plus
+`startsAt` and `endsAt` ISO instants calculated in the configured `timezone`.
 
 `appointment-action` emits `{ action, id }`. Keep private appointment data in
 your application state or API; the DOM event only carries the intent.

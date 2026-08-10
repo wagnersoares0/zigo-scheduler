@@ -14,6 +14,7 @@ import {
   getAppointmentProfessionalId,
   getAppointmentStartsAt,
   getProfessionalName,
+  hasValidAppointmentTiming,
   weekdayOrder,
   type Professional,
 } from "@zigoschedule/scheduler-engine";
@@ -69,7 +70,7 @@ export function buildAgendaMonthLayout(input: AgendaMonthLayoutInput): AgendaMon
 
   // The month grid spans six weeks, so recurrence expansion must cover all six.
   const appointments = expandRecurringAppointments(
-    rawAppointments,
+    rawAppointments.filter(hasValidAppointmentTiming),
     timeZone,
     monthGridWindow(date, timeZone, weekStartsOn)
   );

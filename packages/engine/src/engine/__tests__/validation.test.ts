@@ -47,6 +47,19 @@ const makeContext = (appointments: Appointment[] = [], blocks: Block[] = []) =>
   });
 
 describe("validateAgendaRange", () => {
+  it("ignores malformed appointments before validation math", () => {
+    const context = makeContext([
+      { id: "missing-start", status: "confirmed", professionalId: "prof-a" } as Appointment,
+      { ...makeAg("bad-date", "10:00", "prof-a"), data_hora: "not-a-date" },
+      makeAg("zero-duration", "10:30", "prof-a", 0),
+      makeAg("valid", "11:00", "prof-a"),
+    ]);
+
+    expect(context.appointmentsByDay.get("2026-06-22")?.map((item) => item.id)).toEqual([
+      "valid",
+    ]);
+  });
+
   it("allows exact adjacency at the appointment end", () => {
     const context = makeContext([makeAg("ag-1", "10:00", "prof-a", 30)]);
 

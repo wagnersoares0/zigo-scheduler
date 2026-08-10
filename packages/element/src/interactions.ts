@@ -37,7 +37,7 @@ export const attachInteractions = (
   canvas.addEventListener("click", (native) => {
     // A drag or resize ends with a click; opening the appointment the user just
     // moved would be the opposite of what they asked for.
-    if (consumeGestureClick()) return;
+    if (consumeGestureClick(canvas)) return;
 
     if (selectCard(native)) return;
 

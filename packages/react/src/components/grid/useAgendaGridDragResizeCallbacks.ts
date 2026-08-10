@@ -174,7 +174,7 @@ export const useAgendaGridDragResizeCallbacks = ({
 
   const mutationErrorMessage = useCallback(
     (error: unknown): string => {
-      if (error instanceof RangeError) return messages.invalidDuration;
+      if (error instanceof RangeError && error.message) return error.message;
       if (error instanceof Error && error.message) return error.message;
       return messages.invalidDuration;
     },

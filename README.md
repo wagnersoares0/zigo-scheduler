@@ -255,22 +255,22 @@ simple configuration and properties for arrays or objects.
     timezone="America/New_York"
     locale="en-US"
     week-starts-on="0"
+    block-past-slots
   ></zigo-scheduler>
 </div>
 
 <script type="module">
-  import "https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.2.9/dist/zigo-scheduler.global.js";
+  import "https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.3.0/dist/zigo-scheduler.global.js";
 
   const schedule = document.getElementById("schedule");
 
   schedule.professionals = window.professionalsFromBackend;
   schedule.appointments = window.appointmentsFromBackend;
   schedule.businessHours = window.businessHoursFromBackend;
-  schedule.messages = esESMessages;
 
   schedule.addEventListener("move-event", (event) => {
-    const { id, dayKey, startMinute, professionalId } = event.detail;
-    // POST the change to your backend.
+    const { id, startsAt, endsAt, professionalId } = event.detail;
+    // POST the ISO instants and professional to your backend.
   });
 
   schedule.addEventListener("appointment-action", (event) => {
@@ -283,6 +283,10 @@ simple configuration and properties for arrays or objects.
 No CSS import is needed for the Web Component. Its styles live inside the
 shadow root, so your page CSS does not break the scheduler and the scheduler CSS
 does not leak into your page.
+
+Use `block-past-slots` when the browser must reject moves, resizes and
+selections before the current business-zone time. Without it, past-time policy
+stays entirely in your backend or host app.
 
 ## Headless Layout
 
@@ -411,8 +415,8 @@ import { frFRMessages } from "@zigoschedule/scheduler-core/locales/fr-FR";
 import { esESMessages } from "@zigoschedule/scheduler-core/locales/es-ES";
 
 const schedule = document.querySelector("zigo-scheduler");
-schedule.locale = "es-ES";
-schedule.timezone = "Europe/Madrid";
+schedule.setAttribute("locale", "es-ES");
+schedule.setAttribute("timezone", "Europe/Madrid");
 schedule.messages = esESMessages;
 ```
 

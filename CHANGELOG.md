@@ -5,7 +5,24 @@ All notable changes to Zigo Scheduler will be documented here.
 The project follows the spirit of Keep a Changelog and will use SemVer once the
 first public release is cut.
 
-## [Unreleased]
+## [0.3.0] - 2026-08-10
+
+### Added
+
+- Web Component move and resize events now include ISO `startsAt` and `endsAt`
+  fields alongside the minute-based payload.
+- Web Component hosts can opt into past-slot blocking with `block-past-slots`.
+
+### Fixed
+
+- Engine, day/week layout and month layout now all discard malformed
+  appointments before date math runs.
+- Web Component resize gestures now restore the card when validation rejects the
+  resize.
+- Web Component gesture click suppression is now scoped per scheduler instance.
+- Web Component layout height is clamped for very small containers.
+- React mutation errors now preserve DST wall-clock error messages instead of
+  replacing them with the generic invalid-duration message.
 
 ## [0.2.10] - 2026-08-10
 
