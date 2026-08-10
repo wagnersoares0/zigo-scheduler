@@ -3,6 +3,7 @@ import {
   DEFAULT_TIME_ZONE,
   isValidTimeZone,
   nextDateKey,
+  splitZonedRangeByDay,
   zonedDateKey,
   zonedDayOfWeek,
   zonedDayRangeUtc,
@@ -149,6 +150,35 @@ describe("zonedDayRangeUtc", () => {
     // Midnight on the 7th is the exclusive upper bound, so it belongs to the 7th
     expect(zonedDateKey(end, SAO_PAULO)).toBe("2026-08-07");
     expect(zonedMinutesOfDay(end, SAO_PAULO)).toBe(0);
+  });
+
+  it("does not throw when local midnight does not exist", () => {
+    const santiago = zonedDayRangeUtc("2025-09-07", "America/Santiago");
+    const cairo = zonedDayRangeUtc("2025-04-25", "Africa/Cairo");
+
+    expect(zonedDateKey(santiago.start, "America/Santiago")).toBe("2025-09-07");
+    expect(zonedDateKey(cairo.start, "Africa/Cairo")).toBe("2025-04-25");
+    expect(santiago.start < santiago.end).toBe(true);
+    expect(cairo.start < cairo.end).toBe(true);
+  });
+});
+
+describe("splitZonedRangeByDay", () => {
+  it("splits a range that crosses local midnight", () => {
+    const start = zonedTimeToUtc("2030-08-12", 23 * 60 + 30, NEW_YORK);
+
+    expect(splitZonedRangeByDay(start, 90, NEW_YORK)).toEqual([
+      { dayKey: "2030-08-12", startMinute: 23 * 60 + 30, endMinute: 24 * 60 },
+      { dayKey: "2030-08-13", startMinute: 0, endMinute: 60 },
+    ]);
+  });
+
+  it("uses the real wall-clock end on a spring-forward day", () => {
+    const start = zonedTimeToUtc("2026-03-08", 90, NEW_YORK);
+
+    expect(splitZonedRangeByDay(start, 60, NEW_YORK)).toEqual([
+      { dayKey: "2026-03-08", startMinute: 90, endMinute: 210 },
+    ]);
   });
 });
 

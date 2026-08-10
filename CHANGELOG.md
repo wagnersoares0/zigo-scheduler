@@ -2,8 +2,35 @@
 
 All notable changes to Zigo Scheduler will be documented here.
 
-The project follows the spirit of Keep a Changelog and will use SemVer once the
-first public release is cut.
+The project follows the spirit of Keep a Changelog. Releases are still pre-1.0,
+so minor versions may refine public contracts before the stable API is cut.
+
+## [0.3.1] - 2026-08-10
+
+### Added
+
+- A Playwright browser integration gate now exercises the React package and Web
+  Component with real drag, resize, conflict, details modal and multi-instance
+  behavior before release.
+- A framework install gate now packs the npm packages and verifies clean
+  Vite/React and Next SSR consumer projects outside the monorepo.
+- The Web Component browser gate now mounts four scheduler instances on one page
+  and verifies that move, resize, details sheets and logs stay scoped per
+  instance.
+- The React package ESM build now code-splits optional UI: month view and the
+  built-in details modal ship as chunks while the public `Agenda` import stays
+  unchanged.
+- React's built-in details modal now traps keyboard focus, closes with Escape
+  and restores focus to the appointment card that opened it.
+
+### Fixed
+
+- DST-safe day boundary lookups are now cached, keeping cross-day and
+  spring-forward validation correct without adding a hot-path rebuild cost.
+- `toAppointmentEvent` now exposes that malformed appointments can return no
+  event instead of promising a value that may be `undefined`.
+- The package verifier now detects unscoped React CSS utilities instead of
+  allowing top-level `.flex`, `.fixed` or `.border` selectors through.
 
 ## [0.3.0] - 2026-08-10
 

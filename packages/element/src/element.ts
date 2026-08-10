@@ -49,6 +49,7 @@ const EMPTY: Data = {
   lunchBreak: null,
   colorByProfessional: {},
 };
+const CANCELABLE_EVENTS = new Set(["move-event", "resize-event", "select-range"]);
 
 const number = (value: string | null): number | undefined => {
   const parsed = Number(value);
@@ -285,8 +286,15 @@ export class ZigoSchedulerElement extends ElementBase {
     });
   }
 
-  #emit(name: string, detail: unknown): void {
-    this.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }));
+  #emit(name: string, detail: unknown): boolean {
+    return this.dispatchEvent(
+      new CustomEvent(name, {
+        detail,
+        bubbles: true,
+        composed: true,
+        cancelable: CANCELABLE_EVENTS.has(name),
+      })
+    );
   }
 
   /** Rebuilds the model and redraws. Safe to call as often as needed. */

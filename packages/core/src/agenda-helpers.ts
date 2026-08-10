@@ -19,11 +19,15 @@ import { DEFAULT_TIME_ZONE, zonedMinutesOfDay, type TimeZone } from "./timezone"
  * generateTimeSlots("08:00", "12:00", 30)
  * // ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30"]
  */
+const safeGranularity = (value: number): number =>
+  Number.isFinite(value) && value > 0 ? value : 30;
+
 export function generateTimeSlots(
   openingTime: string,
   closingTime: string,
   granularity: number = 30
 ): string[] {
+  const step = safeGranularity(granularity);
   const [hA, mA] = openingTime.split(":").map(Number);
   const [hF, mF] = closingTime.split(":").map(Number);
   const slots: string[] = [];
@@ -34,7 +38,7 @@ export function generateTimeSlots(
     const h = Math.floor(cursor / 60);
     const m = cursor % 60;
     slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
-    cursor += granularity;
+    cursor += step;
   }
 
   return slots;
@@ -52,7 +56,8 @@ export function roundSlot(
   minutes: number,
   granularity: number = 30
 ): number {
-  return Math.ceil(minutes / granularity) * granularity;
+  const step = safeGranularity(granularity);
+  return Math.ceil(minutes / step) * step;
 }
 
 /** @deprecated Use `roundSlot`. */
@@ -70,7 +75,7 @@ export function countSlots(
   duration: number,
   granularity: number = 30
 ): number {
-  return Math.max(1, Math.ceil(duration / granularity));
+  return Math.max(1, Math.ceil(duration / safeGranularity(granularity)));
 }
 
 /** @deprecated Use `countSlots`. */
@@ -103,6 +108,7 @@ export function calculateAvailableSlots(
   breakEnd?: string | null,
   timeZone: TimeZone = DEFAULT_TIME_ZONE
 ): AvailableSlot[] {
+  const step = safeGranularity(granularity);
   const [hA, mA] = openingTime.split(":").map(Number);
   const [hF, mF] = closingTime.split(":").map(Number);
   const endMinute = hF * 60 + mF;
@@ -138,7 +144,7 @@ export function calculateAvailableSlots(
       const startsAt = ag.startsAt ?? ag.data_hora;
       if (!startsAt) return false;
       const aStart = instantToLocalMinutes(startsAt);
-      const agDur = roundSlot(ag.durationMinutes ?? ag.duracao_minutos ?? granularity, granularity);
+      const agDur = roundSlot(ag.durationMinutes ?? ag.duracao_minutos ?? step, step);
       const aEnd = aStart + agDur;
       return cursor < aEnd && cursor + duration > aStart;
     });
@@ -152,7 +158,7 @@ export function calculateAvailableSlots(
 
     const free = !hasConflict && !inBreak;
     slots.push({ time: `${h}:${m}`, free, livre: free });
-    cursor += granularity;
+    cursor += step;
   }
 
   return slots;

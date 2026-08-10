@@ -1,6 +1,6 @@
 {
   "name": "@zigoschedule/scheduler-monorepo",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Professional scheduling UI for appointment booking, resources, drag/drop, resize, time zones and DST-safe business hours",
   "license": "MIT",
@@ -14,6 +14,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "build": "node scripts/build.mjs",
+    "verify:browser": "npm run build && node scripts/verify-browser.mjs",
+    "verify:frameworks": "npm run build && node scripts/verify-external-frameworks.mjs",
     "verify:package": "node scripts/verify-package.mjs",
     "ci:check": "node scripts/release-check.mjs --skip-audit",
     "audit:dependencies": "npm audit --audit-level=moderate",

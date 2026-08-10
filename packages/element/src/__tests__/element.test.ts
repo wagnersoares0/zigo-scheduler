@@ -295,6 +295,33 @@ describe("events", () => {
     ]);
   });
 
+  it("lets the host cancel a move event", () => {
+    const element = mount({ view: "day", date: "2026-08-10", timezone: TIME_ZONE });
+    element.appointments = APPOINTMENTS;
+
+    const moved: Array<{ cancelable: boolean; defaultPrevented: boolean }> = [];
+    element.addEventListener("move-event", (event) => {
+      event.preventDefault();
+      moved.push({
+        cancelable: event.cancelable,
+        defaultPrevented: event.defaultPrevented,
+      });
+    });
+
+    const layout = element.layout!;
+    const event = layout.events.find((item) => item.id === "1")!;
+    const card = shadow(element).querySelector<HTMLElement>("[data-event-id='1']")!;
+    const x = event.left - layout.axisWidth + 8;
+    const startY = event.top + 8;
+    const targetY = layout.minuteToY(12 * 60) + 8;
+
+    card.dispatchEvent(pointer("pointerdown", { clientX: x, clientY: startY }));
+    document.dispatchEvent(pointer("pointermove", { clientX: x, clientY: targetY }));
+    document.dispatchEvent(pointer("pointerup", { clientX: x, clientY: targetY }));
+
+    expect(moved).toEqual([{ cancelable: true, defaultPrevented: true }]);
+  });
+
   it("restores a resized card when validation blocks the change", () => {
     const element = mount({ view: "day", date: "2026-08-10", timezone: TIME_ZONE });
     element.appointments = [
@@ -331,6 +358,30 @@ describe("events", () => {
     expect(blocked).toEqual([
       expect.objectContaining({ code: "APPOINTMENT_CONFLICT", id: "1" }),
     ]);
+    expect(card.style.top).toBe(originalTop);
+    expect(card.style.height).toBe(originalHeight);
+  });
+
+  it("restores a resized card when the host cancels the resize event", () => {
+    const element = mount({ view: "day", date: "2026-08-10", timezone: TIME_ZONE });
+    element.appointments = APPOINTMENTS;
+
+    element.addEventListener("resize-event", (event) => event.preventDefault());
+
+    const layout = element.layout!;
+    const event = layout.events.find((item) => item.id === "1")!;
+    const card = shadow(element).querySelector<HTMLElement>("[data-event-id='1']")!;
+    const handle = card.querySelector<HTMLElement>("[data-ag-resize-handle]")!;
+    const originalTop = card.style.top;
+    const originalHeight = card.style.height;
+    const x = event.left - layout.axisWidth + 8;
+    const startY = event.top + event.height - 2;
+    const targetY = layout.minuteToY(12 * 60) + 8;
+
+    handle.dispatchEvent(pointer("pointerdown", { clientX: x, clientY: startY }));
+    document.dispatchEvent(pointer("pointermove", { clientX: x, clientY: targetY }));
+    document.dispatchEvent(pointer("pointerup", { clientX: x, clientY: targetY }));
+
     expect(card.style.top).toBe(originalTop);
     expect(card.style.height).toBe(originalHeight);
   });

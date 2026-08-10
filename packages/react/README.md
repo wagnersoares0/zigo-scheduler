@@ -23,6 +23,9 @@ appointment callbacks.
 - Use standard status/payment badges and visible keyboard focus in the default
   UI.
 - Use packaged CSS directly; no Tailwind scan of `node_modules` is required.
+- Keep the public import simple while modern bundlers split optional UI: day and
+  week load from the main React entry, while month view and the built-in details
+  modal are emitted as ESM chunks and loaded only when used.
 - Add RRULE/iCalendar recurrence only when needed with
   `@zigoschedule/scheduler-recurrence`.
 
@@ -60,6 +63,29 @@ import "@zigoschedule/scheduler-react/styles.css";
 ```
 
 No Tailwind setup is required for the scheduler CSS.
+
+The public API stays intentionally small:
+
+```tsx
+import { Agenda } from "@zigoschedule/scheduler-react";
+```
+
+Modern bundlers such as Vite and Next read the ESM build and can fetch the
+month view and built-in details modal as separate chunks. A product that only
+renders day/week and owns its own modal keeps the first React scheduler module
+smaller without changing imports.
+
+In Next.js App Router, render the scheduler from a client component:
+
+```tsx
+"use client";
+
+import { Agenda, type AgendaProps } from "@zigoschedule/scheduler-react";
+
+export function SchedulerClient(props: AgendaProps) {
+  return <Agenda {...props} />;
+}
+```
 
 ## Minimal Example
 
@@ -138,6 +164,10 @@ By default, the React package opens a centered details modal when no
 `onSelectAppointment` callback is supplied. The modal reads the same
 appointment data as the grid: client, phone, service, professional, status,
 notes, price and localized time labels.
+
+The built-in modal owns its keyboard basics: focus moves into the dialog, Tab
+stays inside it, Escape closes it, and focus returns to the appointment card
+that opened it.
 
 ```tsx
 <Agenda

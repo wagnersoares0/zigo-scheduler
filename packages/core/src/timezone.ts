@@ -33,6 +33,7 @@ type ZonedParts = {
 };
 
 const partsFormatterCache = new Map<TimeZone, Intl.DateTimeFormat>();
+const dayBoundaryCache = new Map<string, number>();
 
 function partsFormatter(timeZone: TimeZone): Intl.DateTimeFormat {
   let formatter = partsFormatterCache.get(timeZone);
@@ -187,9 +188,67 @@ export function zonedDayRangeUtc(
   dateYmd: string,
   timeZone: TimeZone
 ): { start: Date; end: Date } {
-  const start = zonedTimeToUtc(dateYmd, 0, timeZone);
-  const end = zonedTimeToUtc(nextDateKey(dateYmd), 0, timeZone);
+  const start = zonedDayBoundaryUtc(dateYmd, timeZone);
+  const end = zonedDayBoundaryUtc(nextDateKey(dateYmd), timeZone);
   return { start, end };
+}
+
+function zonedDayBoundaryUtc(dateYmd: string, timeZone: TimeZone): Date {
+  const cacheKey = `${timeZone}|${dateYmd}`;
+  const cached = dayBoundaryCache.get(cacheKey);
+  if (cached !== undefined) return new Date(cached);
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateYmd);
+  if (!match) {
+    throw new RangeError(`Invalid date key: ${dateYmd}. Expected "YYYY-MM-DD".`);
+  }
+  let low = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])) - 48 * 3_600_000;
+  let high = low + 96 * 3_600_000;
+
+  while (high - low > 1) {
+    const mid = Math.floor((low + high) / 2);
+    if (zonedDateKey(new Date(mid), timeZone) >= dateYmd) high = mid;
+    else low = mid;
+  }
+
+  dayBoundaryCache.set(cacheKey, high);
+  return new Date(high);
+}
+
+export type ZonedRangeDaySegment = {
+  dayKey: string;
+  startMinute: number;
+  endMinute: number;
+};
+
+export function splitZonedRangeByDay(
+  startsAt: Date | string,
+  durationMinutes: number,
+  timeZone: TimeZone
+): ZonedRangeDaySegment[] {
+  const start = startsAt instanceof Date ? startsAt : new Date(startsAt);
+  if (Number.isNaN(start.getTime()) || !Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+    return [];
+  }
+
+  const end = new Date(start.getTime() + durationMinutes * 60_000);
+  const segments: ZonedRangeDaySegment[] = [];
+  let cursor = start;
+
+  while (cursor < end) {
+    const dayKey = zonedDateKey(cursor, timeZone);
+    const dayEnd = zonedDayBoundaryUtc(nextDateKey(dayKey), timeZone);
+    const segmentEnd = dayEnd < end ? dayEnd : end;
+    const startMinute = zonedMinutesOfDay(cursor, timeZone);
+    let endMinute = segmentEnd.getTime() === dayEnd.getTime()
+      ? 24 * 60
+      : zonedMinutesOfDay(segmentEnd, timeZone);
+    if (endMinute <= startMinute) endMinute = startMinute + Math.round((segmentEnd.getTime() - cursor.getTime()) / 60_000);
+    segments.push({ dayKey, startMinute, endMinute });
+    cursor = segmentEnd;
+  }
+
+  return segments;
 }
 
 /** Current date key and minutes-since-midnight in `timeZone`. */

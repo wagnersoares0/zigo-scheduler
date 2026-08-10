@@ -7,9 +7,15 @@ export const parseMoneyInput = (value: string): number | null => {
   if (!raw) return null;
   let normalized = raw;
   if (raw.includes(",") && raw.includes(".")) {
-    normalized = raw.replace(/\./g, "").replace(",", ".");
+    const decimal = raw.lastIndexOf(",") > raw.lastIndexOf(".") ? "," : ".";
+    const thousands = decimal === "," ? "." : ",";
+    normalized = raw.replaceAll(thousands, "").replace(decimal, ".");
   } else if (raw.includes(",")) {
-    normalized = raw.replace(",", ".");
+    const [, decimals = ""] = raw.split(",");
+    normalized = decimals.length === 3 ? raw.replaceAll(",", "") : raw.replace(",", ".");
+  } else if (raw.includes(".")) {
+    const [, decimals = ""] = raw.split(".");
+    normalized = decimals.length === 3 ? raw.replaceAll(".", "") : raw;
   }
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : null;

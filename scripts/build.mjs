@@ -67,7 +67,7 @@ const assertSizeBaseline = () => {
 const RECURRENCE_THIRD_PARTY_BANNER =
   "/*! @zigoschedule/scheduler-recurrence bundles rrule (BSD-3-Clause). See dist/rrule.LICENSE.txt in the npm package. */";
 const REACT_THIRD_PARTY_BANNER =
-  "/*! @zigoschedule/scheduler-react bundles lucide-react (ISC). See dist/lucide-react.LICENSE.txt in the npm package. */";
+  '"use client";\n/*! @zigoschedule/scheduler-react bundles lucide-react (ISC). See dist/lucide-react.LICENSE.txt in the npm package. */';
 
 for (const name of PACKAGES) {
   const dir = join("packages", name);
@@ -100,7 +100,17 @@ for (const name of PACKAGES) {
     logLevel: "error",
   };
 
-  const result = await build({ ...common, outfile: join(out, "index.js"), format: "esm" });
+  const result =
+    name === "react"
+      ? await build({
+          ...common,
+          outdir: out,
+          entryNames: "[name]",
+          chunkNames: "chunks/[name]-[hash]",
+          format: "esm",
+          splitting: true,
+        })
+      : await build({ ...common, outfile: join(out, "index.js"), format: "esm" });
 
   // CommonJS is included for older `require()` projects and classic browser
   // sandboxes that still struggle with ESM-only packages.
@@ -108,6 +118,12 @@ for (const name of PACKAGES) {
 
   const bytes = Object.values(result.metafile.outputs).find((o) => o.entryPoint)?.bytes ?? 0;
   recordSize(`packages/${name}/dist/index.js`, name, bytes);
+  if (name === "react") {
+    const chunkBytes = Object.entries(result.metafile.outputs)
+      .filter(([file]) => file.startsWith("packages/react/dist/chunks/"))
+      .reduce((total, [, output]) => total + output.bytes, 0);
+    recordSize("packages/react/dist/chunks/*.js", "react chunks", chunkBytes);
+  }
 
   const manifest = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
   // `main` points to CJS because legacy resolvers are the ones that read it.

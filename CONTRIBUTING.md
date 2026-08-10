@@ -29,6 +29,8 @@ npm test
 npm run typecheck
 npm run lint
 npm run build
+npm run verify:browser
+npm run verify:frameworks
 npm run verify:package
 npm run release:check
 ```
@@ -43,6 +45,12 @@ npm run release:check
 - Update public documentation when public behavior changes.
 - Add focused tests when touching gestures, time zones, recurrence, layout,
   localization or package output.
+- Use `npm run verify:browser` for browser-level interaction changes. It opens
+  the React package and Web Component in Chromium and checks real drag, resize,
+  conflict, details modal and multi-instance behavior.
+- Use `npm run verify:frameworks` before publishing framework-sensitive changes.
+  It installs packed packages into clean Vite/React and Next SSR projects outside
+  the monorepo.
 
 ## Layers
 

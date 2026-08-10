@@ -52,6 +52,11 @@ describe("generateTimeSlots", () => {
   it("pads hours and minutes to two digits", () => {
     expect(generateTimeSlots("08:00", "09:10", 65)).toEqual(["08:00", "09:05"]);
   });
+
+  it("falls back instead of looping forever on invalid granularity", () => {
+    expect(generateTimeSlots("08:00", "09:00", 0)).toEqual(["08:00", "08:30"]);
+    expect(generateTimeSlots("08:00", "09:00", -15)).toEqual(["08:00", "08:30"]);
+  });
 });
 
 describe("roundSlot", () => {
@@ -64,6 +69,11 @@ describe("roundSlot", () => {
   it("leaves an exact multiple untouched", () => {
     expect(roundSlot(60, 30)).toBe(60);
     expect(roundSlot(0, 30)).toBe(0);
+  });
+
+  it("uses the default step when granularity is invalid", () => {
+    expect(roundSlot(45, 0)).toBe(60);
+    expect(countSlots(45, -5)).toBe(2);
   });
 });
 
@@ -168,6 +178,11 @@ describe("calculateAvailableSlots", () => {
 
   it("returns nothing when the window cannot fit the service", () => {
     expect(calculateAvailableSlots("09:00", "09:30", 60, [], 30)).toEqual([]);
+  });
+
+  it("falls back instead of looping forever when availability granularity is invalid", () => {
+    const slots = calculateAvailableSlots("09:00", "10:00", 30, [], 0);
+    expect(slots.map((slot) => slot.time)).toEqual(["09:00", "09:30"]);
   });
 
   it("keeps Portuguese aliases for legacy callers", () => {

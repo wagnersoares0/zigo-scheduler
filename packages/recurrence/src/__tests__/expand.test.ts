@@ -255,4 +255,17 @@ describe("invalid input", () => {
     expect(expandRecurrence({ ...base, rule: "not a rule" })).toEqual([]);
     expect(expandRecurrence({ ...base, rule: "FREQ=WEEKLY", startsAt: "tomorrow" })).toEqual([]);
   });
+
+  it("ignores override slack that points at a nonexistent DST wall time", () => {
+    expect(() => expandRecurrence({
+      rule: "FREQ=WEEKLY;BYDAY=SU",
+      startsAt: at("2026-03-01", "02:30", NY),
+      durationMinutes: 60,
+      timeZone: NY,
+      range: windowFor("2026-03-01", "2026-03-15"),
+      overrides: {
+        "2026-03-08": { startsAt: at("2026-03-09", "09:00", NY) },
+      },
+    })).not.toThrow();
+  });
 });

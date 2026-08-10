@@ -42,6 +42,11 @@ describe("visibleDaysWindow", () => {
     expect(zonedMinutesOfDay(window.to, NY)).toBe(0);
     expect(window.to.getTime() - window.from.getTime()).toBe((7 * 24 - 1) * 60 * 60 * 1000);
   });
+
+  it("survives zones where midnight is skipped", () => {
+    expect(() => visibleDaysWindow([day(2025, 8, 7)], "America/Santiago")).not.toThrow();
+    expect(() => visibleDaysWindow([day(2025, 3, 25)], "Africa/Cairo")).not.toThrow();
+  });
 });
 
 describe("monthGridWindow", () => {

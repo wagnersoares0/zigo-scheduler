@@ -95,6 +95,22 @@ const rect = (left: number, top: number, width: number, height: number) =>
     toJSON: () => ({}),
   }) as DOMRect;
 
+const waitFor = async (assertion: () => void) => {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 20; attempt++) {
+    try {
+      assertion();
+      return;
+    } catch (error) {
+      lastError = error;
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      });
+    }
+  }
+  throw lastError;
+};
+
 describe("Agenda", () => {
   it("renders with nothing but an array of appointments", () => {
     const html = render();
@@ -123,11 +139,37 @@ describe("Agenda", () => {
     expect(html).toContain("Maya Lee");
   });
 
-  it("renders the month view", () => {
-    const html = render({ view: "month" });
-    expect(html).toContain("Maya Lee");
-    // The month grid spills into neighbouring months to fill whole weeks.
-    expect(html).toContain("31");
+  it("renders the month view", async () => {
+    const container = document.createElement("div");
+    container.style.height = "720px";
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
+    try {
+      await act(async () => {
+        root.render(
+          <Agenda
+            date={MONDAY}
+            appointments={APPOINTMENTS}
+            professionals={PROFESSIONALS}
+            businessHours={BUSINESS_HOURS}
+            timeZone={TIME_ZONE}
+            view="month"
+          />
+        );
+      });
+
+      await waitFor(() => {
+        expect(container.textContent).toContain("Maya Lee");
+        // The month grid spills into neighbouring months to fill whole weeks.
+        expect(container.textContent).toContain("31");
+      });
+    } finally {
+      await act(async () => {
+        root.unmount();
+      });
+      container.remove();
+    }
   });
 
   it("keeps past slots selectable when the guard is turned off", () => {
@@ -309,15 +351,34 @@ describe("Agenda", () => {
 
       const card = container.querySelector<HTMLButtonElement>('button[aria-label*="Maya Lee"]');
       expect(card).toBeTruthy();
+      card!.focus();
 
       await act(async () => {
         card?.click();
       });
 
-      const dialog = container.querySelector<HTMLElement>('[role="dialog"]');
-      expect(dialog?.textContent).toContain("Maya Lee");
-      expect(dialog?.textContent).toContain("Consultation");
-      expect(dialog?.textContent).toContain("Ref.");
+      await waitFor(() => {
+        const dialog = container.querySelector<HTMLElement>('[role="dialog"]');
+        expect(dialog?.textContent).toContain("Maya Lee");
+        expect(dialog?.textContent).toContain("Consultation");
+        expect(dialog?.textContent).toContain("Ref.");
+      });
+
+      const closeButton = container.querySelector<HTMLButtonElement>('button[aria-label="Close"]');
+      expect(document.activeElement).toBe(closeButton);
+
+      await act(async () => {
+        window.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab", shiftKey: true }));
+      });
+      expect(container.querySelector<HTMLElement>('[role="dialog"]')?.contains(document.activeElement)).toBe(true);
+
+      await act(async () => {
+        window.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }));
+      });
+      await waitFor(() => {
+        expect(container.querySelector('[role="dialog"]')).toBeNull();
+        expect(document.activeElement).toBe(card);
+      });
     } finally {
       await act(async () => {
         root.unmount();
@@ -358,6 +419,7 @@ describe("Agenda", () => {
       );
       expect(more).toBeTruthy();
       more!.getBoundingClientRect = () => rect(120, 140, 88, 24);
+      more!.focus();
 
       await act(async () => {
         more!.click();
@@ -365,6 +427,14 @@ describe("Agenda", () => {
 
       const dialog = container.querySelector<HTMLElement>('[role="dialog"]');
       expect(dialog?.textContent).toContain("Client 4");
+      expect(dialog?.contains(document.activeElement)).toBe(true);
+
+      await act(async () => {
+        window.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }));
+      });
+
+      expect(container.querySelector('[role="dialog"]')).toBeNull();
+      expect(document.activeElement).toBe(more);
     } finally {
       await act(async () => {
         root.unmount();

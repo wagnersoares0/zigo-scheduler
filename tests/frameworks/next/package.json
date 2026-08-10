@@ -1,0 +1,11 @@
+{
+  "name": "zigo-next-consumer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

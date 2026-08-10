@@ -7,9 +7,9 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^6.0.5",
-    "@zigoschedule/scheduler-core": "0.2.9",
-    "@zigoschedule/scheduler-engine": "0.2.9",
-    "@zigoschedule/scheduler-react": "0.2.9",
+    "@zigoschedule/scheduler-core": "0.3.1",
+    "@zigoschedule/scheduler-engine": "0.3.1",
+    "@zigoschedule/scheduler-react": "0.3.1",
     "vite": "^8.2.1",
     "typescript": "^5.6.3",
     "react": "^18.3.1",

@@ -5,8 +5,7 @@ import {
   normalizeAgendaLocale,
   normalizeAgendaGranularity,
   normalizeAgendaWeekVisualScale,
-  zonedDateKey,
-  zonedMinutesOfDay,
+  splitZonedRangeByDay,
   type TimeZone,
 } from "@zigoschedule/scheduler-core";
 import { visibleDaysWindow } from "./visible-window";
@@ -267,28 +266,39 @@ export function buildAgendaLayout(input: AgendaLayoutInput): AgendaLayout {
 
   for (const appointment of appointments) {
     const startsAt = getAppointmentStartsAt(appointment);
-    const dayKey = zonedDateKey(startsAt, timeZone);
     const appointmentProfessionalId = getAppointmentProfessionalId(appointment);
-    const column = columnFor(dayKey, appointmentProfessionalId);
-    if (!column) continue;
+    const duration = getAppointmentDurationMinutes(appointment, stepMinutes);
+    const bufferBeforeMinutes = getAppointmentBufferBeforeMinutes(appointment);
+    const bufferAfterMinutes = getAppointmentBufferAfterMinutes(appointment);
+    const busyStartsAt = new Date(new Date(startsAt).getTime() - bufferBeforeMinutes * 60_000);
+    const busyByDay = new Map(
+      splitZonedRangeByDay(
+        busyStartsAt,
+        duration + bufferBeforeMinutes + bufferAfterMinutes,
+        timeZone,
+      ).map((segment) => [segment.dayKey, segment])
+    );
 
-    const start = zonedMinutesOfDay(startsAt, timeZone);
-    const end = start + getAppointmentDurationMinutes(appointment, stepMinutes);
-    const bufferStart = start - getAppointmentBufferBeforeMinutes(appointment);
-    const bufferEnd = end + getAppointmentBufferAfterMinutes(appointment);
-    if (end <= startMinute || start >= endMinute) continue;
+    for (const segment of splitZonedRangeByDay(startsAt, duration, timeZone)) {
+      const column = columnFor(segment.dayKey, appointmentProfessionalId);
+      if (!column) continue;
+      const start = segment.startMinute;
+      const end = segment.endMinute;
+      const busy = busyByDay.get(segment.dayKey);
+      if (end <= startMinute || start >= endMinute) continue;
 
-    placed.push({
-      id: appointment.id,
-      kind: "appointment",
-      column,
-      start,
-      end,
-      bufferStart,
-      bufferEnd,
-      visualEnd: Math.max(end, start + stepMinutes),
-      raw: appointment,
-    });
+      placed.push({
+        id: appointment.id,
+        kind: "appointment",
+        column,
+        start,
+        end,
+        bufferStart: busy?.startMinute ?? start,
+        bufferEnd: busy?.endMinute ?? end,
+        visualEnd: Math.max(end, start + stepMinutes),
+        raw: appointment,
+      });
+    }
   }
 
   for (const block of blocks.filter(hasValidBlockTiming)) {

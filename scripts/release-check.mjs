@@ -23,7 +23,9 @@ const steps = [
     env: { ...process.env, LINT_DEBT: "1" },
   },
   { label: "build", command: "node", args: ["scripts/build.mjs"] },
+  { label: "browser integration", command: "node", args: ["scripts/verify-browser.mjs"] },
   { label: "external package install", command: "node", args: ["scripts/verify-package.mjs"] },
+  { label: "external framework installs", command: "node", args: ["scripts/verify-external-frameworks.mjs"] },
 ];
 
 if (!skipAudit) {

@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  lazy,
   memo,
+  Suspense,
   useCallback,
   useMemo,
   useRef,
@@ -9,12 +11,10 @@ import {
 } from "react";
 
 import { AgendaGrid } from "./components/grid/AgendaGrid";
-import { AgendaMonthView } from "./components/views/AgendaMonthView";
-import {
-  AppointmentDetailsModal,
-  type AppointmentDetailsAction,
-  type AppointmentDetailsActionEvent,
-  type AppointmentDetailsMode,
+import type {
+  AppointmentDetailsAction,
+  AppointmentDetailsActionEvent,
+  AppointmentDetailsMode,
 } from "./components/details/AppointmentDetailsModal";
 import { AgendaConfigProvider } from "./config/AgendaConfigContext";
 import { createAgendaOptions } from "@zigoschedule/scheduler-engine";
@@ -71,6 +71,17 @@ import {
   type AppointmentColorMode,
 } from "@zigoschedule/scheduler-core";
 import { useAgendaClock } from "./hooks/useAgendaClock";
+
+const LazyAgendaMonthView = lazy(() =>
+  import("./components/views/AgendaMonthView").then((module) => ({
+    default: module.AgendaMonthView,
+  }))
+);
+const LazyAppointmentDetailsModal = lazy(() =>
+  import("./components/details/AppointmentDetailsModal").then((module) => ({
+    default: module.AppointmentDetailsModal,
+  }))
+);
 
 /**
  * The calendar, assembled.
@@ -458,6 +469,11 @@ export const Agenda = memo(function Agenda({
       }),
     [agsByDay, step, timeZone]
   );
+  const notifyDayClosed = useCallback((message: string | null) => {
+    if (message) onBlocked?.(message);
+  }, [onBlocked]);
+  const isDayClosedForToday = useCallback(() => false, []);
+  const resolveSelectableStart = useCallback((_dayKey: string, _profId: string | null, minute: number) => minute, []);
 
   const handleDrop = useCallback(
     async (appointmentId: string, startsAt: string, professionalId: string | null) => {
@@ -501,19 +517,22 @@ export const Agenda = memo(function Agenda({
     [colorMode, defaultColor, detailsAppointment]
   );
 
-  const detailsModal = useBuiltInDetails ? (
-    <AppointmentDetailsModal
-      appointment={detailsAppointment}
-      professionals={professionals}
-      timeZone={timeZone}
-      locale={locale}
-      messages={agendaMessages}
-      accentColor={detailsAccentColor}
-      actions={detailsActions}
-      onAction={onDetailsAction}
-      onClose={() => setDetailsAppointment(null)}
-    />
-  ) : null;
+  const detailsModal =
+    useBuiltInDetails && detailsAppointment ? (
+      <Suspense fallback={null}>
+        <LazyAppointmentDetailsModal
+          appointment={detailsAppointment}
+          professionals={professionals}
+          timeZone={timeZone}
+          locale={locale}
+          messages={agendaMessages}
+          accentColor={detailsAccentColor}
+          actions={detailsActions}
+          onAction={onDetailsAction}
+          onClose={() => setDetailsAppointment(null)}
+        />
+      </Suspense>
+    ) : null;
 
   const canonicalView =
     view === "month" ? "dayGridMonth" : view === "week" ? "timeGridWeek" : "timeGridDay";
@@ -533,21 +552,23 @@ export const Agenda = memo(function Agenda({
   if (view === "month") {
     return (
       <AgendaConfigProvider timeZone={timeZone} locale={locale} messages={messages}>
-        <div className="flex h-full min-h-0 w-full overflow-auto">
-        <AgendaMonthView
-          weekStartsOn={weekStartsOn}
-          date={date}
-          agsByDay={agsByDay}
-          bloqsByDay={bloqsByDay}
-          themeProfs={professionals}
-          appointmentColorMode={colorMode}
-          appointmentDefaultColor={defaultColor}
-          onOpenAgendamento={openAppointmentDetails}
-          onOpenBloqueio={NOOP}
-          onOpenDay={NOOP}
-          calendarOptions={calendarOptions}
-          calendarView="dayGridMonth"
-        />
+        <div className="zigo-scheduler overflow-auto">
+        <Suspense fallback={null}>
+          <LazyAgendaMonthView
+            weekStartsOn={weekStartsOn}
+            date={date}
+            agsByDay={agsByDay}
+            bloqsByDay={bloqsByDay}
+            themeProfs={professionals}
+            appointmentColorMode={colorMode}
+            appointmentDefaultColor={defaultColor}
+            onOpenAgendamento={openAppointmentDetails}
+            onOpenBloqueio={NOOP}
+            onOpenDay={NOOP}
+            calendarOptions={calendarOptions}
+            calendarView="dayGridMonth"
+          />
+        </Suspense>
         {detailsModal}
         </div>
       </AgendaConfigProvider>
@@ -563,7 +584,7 @@ export const Agenda = memo(function Agenda({
         host clips it, no scrollbar anywhere. This wrapper makes the contract
         hold whatever the host's container happens to be.
       */}
-      <div className="flex h-full min-h-0 w-full">
+      <div className="zigo-scheduler">
       <AgendaGrid
         date={date}
         days={days}
@@ -592,13 +613,13 @@ export const Agenda = memo(function Agenda({
         selectionOverlayRef={selectionOverlayRef}
         daySelection={daySelection}
         onSetDaySelection={commitSelection}
-        onSetDayClosedNotice={(message) => message && onBlocked?.(message)}
+        onSetDayClosedNotice={notifyDayClosed}
         onCloseDaySelection={closeSelection}
         isSelectedDateBeforeBrazilToday={isBeforeToday}
-        isDiaEncerradoParaHoje={() => false}
+        isDiaEncerradoParaHoje={isDayClosedForToday}
         isSlotInPastBrazil={isSlotInPast}
         slotTakenInCol={slotTaken}
-        resolveSelectableStartInCol={(_dayKey, _profId, minute) => minute}
+        resolveSelectableStartInCol={resolveSelectableStart}
         dayMinuteToPx={minuteToPx}
         dayMinuteFromY={minuteFromY}
         onOpenBloqueio={NOOP}

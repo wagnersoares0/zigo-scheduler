@@ -1,0 +1,10 @@
+{
+  "name": "zigo-vite-consumer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

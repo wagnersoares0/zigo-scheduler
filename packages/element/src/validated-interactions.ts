@@ -32,7 +32,7 @@ import type { RangeSelection } from "./selection";
 
 type MoveChange = Parameters<NonNullable<GestureCallbacks["onMove"]>>[0];
 type ResizeChange = Parameters<NonNullable<GestureCallbacks["onResize"]>>[0];
-type Emit = (name: string, detail: unknown) => void;
+type Emit = (name: string, detail: unknown) => boolean;
 type ValidationState = {
   engine: AgendaEngineContext;
   messages: AgendaValidationMessages;
@@ -130,7 +130,9 @@ const blocked = (
   emit: Emit,
   message: string | undefined,
   extra: Record<string, unknown> = {},
-): void => emit("blocked-event", { message: message ?? "Blocked", ...extra });
+): void => {
+  emit("blocked-event", { message: message ?? "Blocked", ...extra });
+};
 
 const emitRange = (
   state: ValidationState,
@@ -139,11 +141,10 @@ const emitRange = (
   endMinute: number,
 ): boolean => {
   try {
-    state.emit(name, {
+    return state.emit(name, {
       ...detail,
       ...rangeIso(detail.dayKey, detail.startMinute, endMinute, state.timeZone),
     });
-    return true;
   } catch (error) {
     blocked(state.emit, error instanceof Error ? error.message : state.messages.INVALID_DURATION, {
       code: "INVALID_WALL_CLOCK_TIME",

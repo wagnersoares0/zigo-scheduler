@@ -1,6 +1,6 @@
 {
   "name": "@zigoschedule/scheduler-element",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "<zigo-scheduler> Web Component for professional scheduling in HTML/PHP/Laravel/Django with drag/drop, resize, resources and time zones.",
   "license": "MIT",
   "author": "Wagner Silva <contato@zigoapp.com.br>",
@@ -8,10 +8,10 @@
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@zigoschedule/scheduler-core": "^0.3.0",
-    "@zigoschedule/scheduler-engine": "^0.3.0",
-    "@zigoschedule/scheduler-interaction": "^0.3.0",
-    "@zigoschedule/scheduler-layout": "^0.3.0"
+    "@zigoschedule/scheduler-core": "^0.3.1",
+    "@zigoschedule/scheduler-engine": "^0.3.1",
+    "@zigoschedule/scheduler-interaction": "^0.3.1",
+    "@zigoschedule/scheduler-layout": "^0.3.1"
   },
   "module": "./dist/index.js",
   "exports": {

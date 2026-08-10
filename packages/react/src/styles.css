@@ -1,9 +1,20 @@
-.border,
-.border-t,
-.border-r,
-.border-b,
-.border-b-2,
-.border-l {
+.zigo-scheduler {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.zigo-scheduler.overflow-auto {
+  overflow: auto;
+}
+
+.zigo-scheduler .border,
+.zigo-scheduler .border-t,
+.zigo-scheduler .border-r,
+.zigo-scheduler .border-b,
+.zigo-scheduler .border-b-2,
+.zigo-scheduler .border-l {
   border: 0 solid;
 }
 

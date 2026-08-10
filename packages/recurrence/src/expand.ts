@@ -17,7 +17,7 @@ export type OccurrenceOverride = {
 };
 
 export type RecurrenceInput = {
-  /** RRULE as text: `"FREQ=WEEKLY;BYDAY=TH"`, or a full `RRULE:`/`EXDATE:` block. */
+  /** RRULE as text, e.g. `"FREQ=WEEKLY;BYDAY=TH"` or `"RRULE:FREQ=WEEKLY;BYDAY=TH"`. */
   rule: string;
   /** First occurrence, as a UTC instant. */
   startsAt: string | Date;
@@ -26,7 +26,7 @@ export type RecurrenceInput = {
   timeZone?: TimeZone;
   /** Only occurrences overlapping this window are returned. */
   range: { from: Date; to: Date };
-  /** Occurrences to skip, as date keys ("2026-08-13") or instants. */
+  /** Occurrences to skip, as date keys ("2026-08-13") or instants. Use this instead of inline EXDATE. */
   exceptions?: Array<string | Date>;
   /**
    * Changed occurrences, indexed by the original slot day.
@@ -189,8 +189,12 @@ function biggestShift(
     if (!DAY_KEY.test(slotDayKey)) continue;
     const moved = new Date(override.startsAt);
     if (Number.isNaN(moved.getTime())) continue;
-    const slot = zonedTimeToUtc(slotDayKey, startMinute, timeZone);
-    biggest = Math.max(biggest, Math.abs(moved.getTime() - slot.getTime()));
+    try {
+      const slot = zonedTimeToUtc(slotDayKey, startMinute, timeZone);
+      biggest = Math.max(biggest, Math.abs(moved.getTime() - slot.getTime()));
+    } catch {
+      continue;
+    }
   }
   return biggest;
 }

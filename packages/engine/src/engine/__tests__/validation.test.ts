@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { zonedTimeToUtc } from "@zigoschedule/scheduler-core";
 import type { Appointment, Block, Professional } from "../../types";
 import { buildAgendaEngineContext, validateAgendaRange } from "../index";
 
@@ -37,6 +38,23 @@ const makeContext = (appointments: Appointment[] = [], blocks: Block[] = []) =>
     appointmentsByDay: new Map([["2026-06-22", appointments]]),
     blocksByDay: new Map([["2026-06-22", blocks]]),
     businessHours: { startMinute: 8 * 60, endMinute: 18 * 60 },
+    pausaIntervalo: null,
+    snapMinutes: 5,
+    temporalGuards: {
+      isDayBeforeToday: () => false,
+      isDayClosedForToday: () => false,
+      isSlotInPast: () => false,
+    },
+  });
+
+const makeOpenContext = (dayKey: string, appointments: Appointment[], timeZone = "America/New_York") =>
+  buildAgendaEngineContext({
+    resources: [{ id: "prof-a", name: "Professional A" }],
+    date: new Date(`${dayKey}T12:00:00Z`),
+    timeZone,
+    appointmentsByDay: new Map([[dayKey, appointments]]),
+    blocksByDay: new Map([[dayKey, []]]),
+    businessHours: { startMinute: 0, endMinute: 24 * 60 },
     pausaIntervalo: null,
     snapMinutes: 5,
     temporalGuards: {
@@ -91,6 +109,46 @@ describe("validateAgendaRange", () => {
 
     expect(sameProf).toMatchObject({ ok: false, code: "APPOINTMENT_CONFLICT" });
     expect(otherProf).toEqual({ ok: true });
+  });
+
+  it("blocks overlap from an appointment that crosses local midnight", () => {
+    const context = makeOpenContext("2030-08-12", [{
+      id: "night",
+      startsAt: zonedTimeToUtc("2030-08-12", 23 * 60 + 30, "America/New_York").toISOString(),
+      durationMinutes: 90,
+      clientName: "Night client",
+      status: "confirmed",
+      professionalId: "prof-a",
+    }]);
+
+    const result = validateAgendaRange(context, {
+      dayKey: "2030-08-13",
+      resourceId: "prof-a",
+      startMinute: 15,
+      endMinute: 45,
+    });
+
+    expect(result).toMatchObject({ ok: false, code: "APPOINTMENT_CONFLICT" });
+  });
+
+  it("blocks overlap by the real wall-clock end on a spring-forward day", () => {
+    const context = makeOpenContext("2026-03-08", [{
+      id: "dst",
+      startsAt: zonedTimeToUtc("2026-03-08", 90, "America/New_York").toISOString(),
+      durationMinutes: 60,
+      clientName: "DST client",
+      status: "confirmed",
+      professionalId: "prof-a",
+    }]);
+
+    const result = validateAgendaRange(context, {
+      dayKey: "2026-03-08",
+      resourceId: "prof-a",
+      startMinute: 3 * 60,
+      endMinute: 3 * 60 + 15,
+    });
+
+    expect(result).toMatchObject({ ok: false, code: "APPOINTMENT_CONFLICT" });
   });
 
   it("treats appointment buffers as occupied time", () => {

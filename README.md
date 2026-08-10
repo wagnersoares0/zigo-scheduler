@@ -67,6 +67,19 @@ and API calls stay in the host application. The scheduler receives already
 scoped data, validates the calendar rules it knows about, renders the schedule,
 and sends changes back through callbacks or DOM events.
 
+## Release Quality
+
+Every release is checked as a package, not only as source code inside this
+repository. The release gate builds the packages, installs them into a clean
+folder, type-checks the published declarations, opens the React package and Web
+Component in Chromium, drives real drag/resize/modal interactions, and smoke
+tests clean Vite/React and Next SSR consumer projects.
+
+That means the published package is expected to behave like the demos: scoped
+CSS, packaged React styles, framework-free Web Component usage, DST-safe
+positioning, cancelable DOM events and external framework installs are all
+verified before publishing.
+
 ## Professional Scheduler Capability Matrix
 
 Zigo Scheduler is not positioned as a simple event calendar. It is built around
@@ -129,6 +142,9 @@ npm install @zigoschedule/scheduler-react @zigoschedule/scheduler-core @zigosche
 import { Agenda } from "@zigoschedule/scheduler-react";
 import type { Appointment, BusinessHours, Professional } from "@zigoschedule/scheduler-engine";
 import "@zigoschedule/scheduler-react/styles.css";
+
+// Next.js App Router: put this component in a file that starts with
+// "use client". Keep the CSS import in app/layout.tsx or another global entry.
 
 const professionals: Professional[] = [
   {
@@ -260,7 +276,7 @@ simple configuration and properties for arrays or objects.
 </div>
 
 <script type="module">
-  import "https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.3.0/dist/zigo-scheduler.global.js";
+  import "https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.3.1/dist/zigo-scheduler.global.js";
 
   const schedule = document.getElementById("schedule");
 
@@ -444,6 +460,11 @@ send it. If your product is multilingual, localize that data in your app or API.
 Only the React package has a React peer dependency. The Web Component does not
 need React, and the core/layout packages do not touch the DOM.
 
+The React entry keeps one public import, but the ESM build is split internally:
+modern bundlers can load the month view and built-in details modal only when the
+app actually uses them. Day/week installs stay simple and get a smaller first
+React scheduler module without a new API.
+
 ## What It Does Not Do
 
 - It does not store appointments.
@@ -463,13 +484,16 @@ npm test
 npm run typecheck
 npm run lint
 npm run build
+npm run verify:browser
+npm run verify:frameworks
 npm run verify:package
 npm run release:check
 ```
 
 `release:check` is the publication gate. It runs the fast checks, builds the
-packages, packs them, installs them outside the monorepo, and verifies the
-browser-facing bundles.
+packages, exercises real React and Web Component interactions in Chromium,
+packs them, installs them outside the monorepo, verifies the browser-facing
+bundles, and smoke-tests clean Vite/React and Next SSR consumer projects.
 
 ## License
 

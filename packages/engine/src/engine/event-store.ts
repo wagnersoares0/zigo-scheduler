@@ -1,7 +1,7 @@
 import { GRID_MIN } from "../constants";
 import type { Appointment, Block, Professional } from "../types";
-import { dateKey, normalizeHHMM, toMin, zoneKey, zoneMins } from "../utils/time";
-import { DEFAULT_TIME_ZONE, type TimeZone } from "@zigoschedule/scheduler-core";
+import { dateKey, normalizeHHMM, toMin } from "../utils/time";
+import { DEFAULT_TIME_ZONE, splitZonedRangeByDay, type TimeZone } from "@zigoschedule/scheduler-core";
 import {
   getAppointmentBufferAfterMinutes,
   getAppointmentBufferBeforeMinutes,
@@ -71,27 +71,39 @@ export const buildAgendaResources = (resources: Professional[], fallbackDate: Da
 export const toAppointmentEvent = (
   ag: Appointment,
   timeZone: TimeZone = DEFAULT_TIME_ZONE,
-): AgendaAppointmentEvent => {
+): AgendaAppointmentEvent | undefined => toAppointmentEvents(ag, timeZone)[0];
+
+export const toAppointmentEvents = (
+  ag: Appointment,
+  timeZone: TimeZone = DEFAULT_TIME_ZONE,
+): AgendaAppointmentEvent[] => {
   const normalized = normalizeAppointment(ag);
   const startsAt = getAppointmentStartsAt(normalized);
-  const startMinute = zoneMins(startsAt, timeZone);
   const durationMinutes = Math.max(GRID_MIN, getAppointmentDurationMinutes(normalized, GRID_MIN));
   const bufferBeforeMinutes = getAppointmentBufferBeforeMinutes(normalized);
   const bufferAfterMinutes = getAppointmentBufferAfterMinutes(normalized);
+  const busyStartsAt = new Date(new Date(startsAt).getTime() - bufferBeforeMinutes * 60_000);
+  const busyByDay = new Map(
+    splitZonedRangeByDay(
+      busyStartsAt,
+      durationMinutes + bufferBeforeMinutes + bufferAfterMinutes,
+      timeZone,
+    ).map((segment) => [segment.dayKey, segment])
+  );
 
-  return {
+  return splitZonedRangeByDay(startsAt, durationMinutes, timeZone).map((segment) => ({
     kind: "appointment",
     id: normalized.id,
-    dayKey: zoneKey(startsAt, timeZone),
+    dayKey: segment.dayKey,
     resourceId: toResourceId(getAppointmentProfessionalId(normalized)),
-    startMinute,
-    endMinute: startMinute + durationMinutes,
-    bufferStartMinute: startMinute - bufferBeforeMinutes,
-    bufferEndMinute: startMinute + durationMinutes + bufferAfterMinutes,
+    startMinute: segment.startMinute,
+    endMinute: segment.endMinute,
+    bufferStartMinute: busyByDay.get(segment.dayKey)?.startMinute ?? segment.startMinute,
+    bufferEndMinute: busyByDay.get(segment.dayKey)?.endMinute ?? segment.endMinute,
     status: normalized.status,
     appointment: normalized,
     ag: normalized,
-  };
+  }));
 };
 
 export const toBlockEvent = (bloq: Block): AgendaBlockEvent => {
@@ -114,13 +126,14 @@ export const mapAppointmentsByDay = (
 ): Map<string, AgendaAppointmentEvent[]> => {
   const mapped = new Map<string, AgendaAppointmentEvent[]>();
 
-  appointmentsByDay.forEach((appointments, dayKey) => {
-    // Keep the arrow explicit: passing the function directly would send the
-    // array index as the time zone.
-    mapped.set(
-      dayKey,
-      appointments.filter(hasValidAppointmentTiming).map((ag) => toAppointmentEvent(ag, timeZone))
-    );
+  appointmentsByDay.forEach((appointments) => {
+    appointments.filter(hasValidAppointmentTiming).forEach((ag) => {
+      for (const event of toAppointmentEvents(ag, timeZone)) {
+        const list = mapped.get(event.dayKey);
+        if (list) list.push(event);
+        else mapped.set(event.dayKey, [event]);
+      }
+    });
   });
 
   return mapped;

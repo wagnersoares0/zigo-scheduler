@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import { X } from "lucide-react";
 import type {
@@ -43,6 +43,39 @@ import {
   useAgendaMessages,
   useAgendaTimeZone,
 } from "../../config/AgendaConfigContext";
+
+const FOCUSABLE = [
+  "button:not([disabled])",
+  "a[href]",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[tabindex]:not([tabindex='-1'])",
+].join(",");
+
+const focusableElements = (root: HTMLElement): HTMLElement[] =>
+  [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+    (node) => !node.hasAttribute("disabled") && node.getAttribute("aria-hidden") !== "true"
+  );
+
+const keepFocusInside = (event: KeyboardEvent, shell: HTMLElement): void => {
+  const tabbables = focusableElements(shell);
+  if (tabbables.length === 0) {
+    event.preventDefault();
+    shell.focus();
+    return;
+  }
+
+  const first = tabbables[0];
+  const last = tabbables[tabbables.length - 1];
+  const active = shell.ownerDocument.activeElement;
+  const leavingStart = event.shiftKey && (active === first || !shell.contains(active));
+  const leavingEnd = !event.shiftKey && (active === last || !shell.contains(active));
+
+  if (!leavingStart && !leavingEnd) return;
+  event.preventDefault();
+  (event.shiftKey ? last : first).focus();
+};
 
 export type AgendaMonthMoreItem =
   | { kind: "ag"; ag: Appointment; start: number }
@@ -383,6 +416,30 @@ export function AgendaMorePopover({
   const popoverStyle = getPopoverStyle(anchorRect);
   const locale = useAgendaLocale();
   const messages = useAgendaMessages();
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const focusedBeforeOpen = document.activeElement;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      keepFocusInside(event, dialogRef.current);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    closeButtonRef.current?.focus();
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      if (focusedBeforeOpen instanceof HTMLElement && focusedBeforeOpen.isConnected) {
+        focusedBeforeOpen.focus({ preventScroll: true });
+      }
+    };
+  }, [onClose]);
 
   return (
     <div className="fixed inset-0 z-[80]">
@@ -394,6 +451,7 @@ export function AgendaMorePopover({
       />
 
       <section
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={`${messages.agenda}: ${dayKey}`}
@@ -410,6 +468,7 @@ export function AgendaMorePopover({
             </p>
           </div>
           <button
+            ref={closeButtonRef}
             type="button"
             aria-label={messages.close}
             onClick={onClose}

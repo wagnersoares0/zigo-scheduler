@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import type { RefObject } from "react";
 import type { AgendaMessages, TimeZone } from "@zigoschedule/scheduler-core";
 import type { Appointment, Professional } from "@zigoschedule/scheduler-engine";
 import {
@@ -11,6 +12,74 @@ import {
   DetailsShell,
 } from "./AppointmentDetailsModalParts";
 import { readAppointmentDetails } from "./AppointmentDetailsData";
+
+const FOCUSABLE = [
+  "button:not([disabled])",
+  "a[href]",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[tabindex]:not([tabindex='-1'])",
+].join(",");
+
+const focusableElements = (root: HTMLElement): HTMLElement[] =>
+  [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+    (node) => !node.hasAttribute("disabled") && node.getAttribute("aria-hidden") !== "true"
+  );
+
+const keepFocusInside = (event: KeyboardEvent, shell: HTMLElement): void => {
+  const tabbables = focusableElements(shell);
+  if (tabbables.length === 0) {
+    event.preventDefault();
+    shell.focus();
+    return;
+  }
+
+  const first = tabbables[0];
+  const last = tabbables[tabbables.length - 1];
+  const active = shell.ownerDocument.activeElement;
+  const leavingStart = event.shiftKey && (active === first || !shell.contains(active));
+  const leavingEnd = !event.shiftKey && (active === last || !shell.contains(active));
+
+  if (!leavingStart && !leavingEnd) return;
+  event.preventDefault();
+  (event.shiftKey ? last : first).focus();
+};
+
+function useModalFocus({
+  appointment,
+  closeButtonRef,
+  dialogRef,
+  onClose,
+}: {
+  appointment: Appointment | null;
+  closeButtonRef: RefObject<HTMLButtonElement>;
+  dialogRef: RefObject<HTMLElement>;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    if (!appointment) return;
+    const focusedBeforeOpen = document.activeElement;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      keepFocusInside(event, dialogRef.current);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    closeButtonRef.current?.focus();
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      if (focusedBeforeOpen instanceof HTMLElement && focusedBeforeOpen.isConnected) {
+        focusedBeforeOpen.focus({ preventScroll: true });
+      }
+    };
+  }, [appointment, closeButtonRef, dialogRef, onClose]);
+}
 
 export type AppointmentDetailsMode = "auto" | "modal" | "callback";
 
@@ -49,18 +118,10 @@ export function AppointmentDetailsModal({
   onAction,
   onClose,
 }: AppointmentDetailsModalProps) {
+  const dialogRef = useRef<HTMLElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const actionSet = useMemo(() => new Set(actions), [actions]);
-
-  useEffect(() => {
-    if (!appointment) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    closeButtonRef.current?.focus();
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [appointment, onClose]);
+  useModalFocus({ appointment, closeButtonRef, dialogRef, onClose });
 
   if (!appointment) return null;
 
@@ -71,7 +132,7 @@ export function AppointmentDetailsModal({
   };
 
   return (
-    <DetailsShell label={messages.openAppointment(details.clientName)} onClose={onClose}>
+    <DetailsShell dialogRef={dialogRef} label={messages.openAppointment(details.clientName)} onClose={onClose}>
       <DetailsHeader
         closeButtonRef={closeButtonRef}
         details={details}

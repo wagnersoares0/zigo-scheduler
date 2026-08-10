@@ -45,7 +45,7 @@ try {
   writeFileSync(join(tempDir, "package.json"), JSON.stringify({ name: "package-consumer", private: true }));
 
   console.log("  installing into a clean folder...");
-  const output = execSync("npm install ./*.tgz --no-audit --no-fund", {
+  const output = execSync("npm install ./*.tgz react@18 react-dom@18 @types/react@18 @types/react-dom@18 --no-audit --no-fund", {
     cwd: tempDir,
     stdio: "pipe",
   }).toString();
@@ -128,7 +128,7 @@ try {
   const recurrenceBanner =
     "/*! @zigoschedule/scheduler-recurrence bundles rrule (BSD-3-Clause). See dist/rrule.LICENSE.txt in the npm package. */";
   const reactBanner =
-    "/*! @zigoschedule/scheduler-react bundles lucide-react (ISC). See dist/lucide-react.LICENSE.txt in the npm package. */";
+    '"use client";\n/*! @zigoschedule/scheduler-react bundles lucide-react (ISC). See dist/lucide-react.LICENSE.txt in the npm package. */';
   const recurrenceBuilds = ["index.js", "index.cjs", "zigo-scheduler-recurrence.global.js"].map((file) =>
     readFileSync(join(recurrenceRoot, "dist", file), "utf8")
   );
@@ -175,13 +175,16 @@ try {
     const runtimeFiles = ["index.js", "index.cjs"]
       .map((file) => join(packageRoot, "dist", file))
       .map((file) => readFileSync(file, "utf8"));
+    const allRuntimeFiles = distFiles
+      .filter((file) => file.endsWith(".js") || file.endsWith(".cjs"))
+      .map((file) => readFileSync(join(packageRoot, "dist", file), "utf8"));
     check(
       `${name} publishes no source maps`,
       distFiles.every((file) => !file.endsWith(".map")),
       distFiles.filter((file) => file.endsWith(".map")).join(", ") || "dist only"
     );
     const siblingImports = new Set(
-      runtimeFiles
+      allRuntimeFiles
         .flatMap((content) => [...content.matchAll(/@zigoschedule\/scheduler-[a-z-]+/g)].map((match) => match[0]))
         .filter((dependencyName) => dependencyName !== currentPackageName)
     );
@@ -194,9 +197,15 @@ try {
       missing.length ? `missing ${missing.join(", ")}` : `${siblingImports.size} sibling deps`
     );
     if (name === "react") {
+      const reactChunks = distFiles.filter((file) => file.startsWith("chunks/") && file.endsWith(".js"));
+      check(
+        "React publishes split ESM chunks",
+        reactChunks.length >= 2 && runtimeFiles[0].includes("./chunks/"),
+        reactChunks.length ? reactChunks.join(", ") : "no chunks"
+      );
       const lucideLicense = readFileSync(join(packageRoot, "dist", "lucide-react.LICENSE.txt"), "utf8");
       check(
-        "React publishes lucide-react notice",
+        "React publishes use client and lucide-react notice",
         runtimeFiles.every((content) => content.startsWith(reactBanner)),
         "ESM and CJS"
       );
@@ -222,8 +231,13 @@ try {
   const css = readFileSync(cssPath, "utf8");
   check(
     "React publishes ready CSS",
-    css.includes(".flex") && css.includes(".bg-\\[\\#E9D5FF\\]"),
+    css.includes(".zigo-scheduler .flex") && css.includes(".zigo-scheduler .bg-\\[\\#E9D5FF\\]"),
     `${Math.round(css.length / 1024)} KB`
+  );
+  check(
+    "React CSS utilities stay scoped",
+    !/(^|})\.(flex|fixed|border)[{,]/.test(css),
+    "zigo-scheduler root"
   );
 
   // Declaring `types` means nothing if the file was not published. This check
@@ -231,6 +245,7 @@ try {
   writeFileSync(
     join(tempDir, "types.ts"),
     `import { buildAgendaLayout, type AgendaLayout } from "@zigoschedule/scheduler-layout";
+     import { Agenda, type AgendaProps } from "@zigoschedule/scheduler-react";
      import { getAgendaMessages, zonedTimeToUtc, type TimeZone } from "@zigoschedule/scheduler-core";
      import { ptBRMessages } from "@zigoschedule/scheduler-core/locales/pt-BR";
      const timeZone: TimeZone = "America/New_York";
@@ -239,8 +254,14 @@ try {
        date: startsAt, view: "day", appointments: [],
        professionals: [{ id: "dr-lee", name: "Dr. Lee" }], width: 800, height: 600,
      });
+     const agendaComponent: typeof Agenda = Agenda;
+     const props: AgendaProps = {
+       date: startsAt, appointments: [],
+       professionals: [{ id: "dr-lee", name: "Dr. Lee" }],
+     };
      const columnCount: number = layout.columns.length;
      const today: string = getAgendaMessages("pt-BR", ptBRMessages).today;
+     console.log(Boolean(agendaComponent) && props.professionals.length);
      console.log(today);
      console.log(columnCount);`
   );

@@ -1,6 +1,6 @@
 {
   "name": "@zigoschedule/scheduler-interaction",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Pointer drag/drop, resize, mirror and auto-scroll primitives for professional scheduler UIs. DOM, no framework.",
   "license": "MIT",
   "author": "Wagner Silva <contato@zigoapp.com.br>",

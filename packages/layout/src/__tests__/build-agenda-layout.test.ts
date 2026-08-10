@@ -34,7 +34,8 @@ const BUSINESS_HOURS: BusinessHours = {
   sabado: OPEN,
 };
 
-const at = (time: string, minutes: number, prof: string, id: string, client = "Maya"): Appointment => {
+const at = (...args: [time: string, minutes: number, prof: string, id: string, client?: string]): Appointment => {
+  const [time, minutes, prof, id, client = "Maya"] = args;
   const [h, m] = time.split(":").map(Number);
   return {
     id,
@@ -260,6 +261,40 @@ describe("events", () => {
     });
     expect(model.events[0].columnKey).toBe(model.columns[1].key);
     expect(model.events[0].left).toBe(model.columns[1].left);
+  });
+
+  it("splits an appointment that crosses midnight into the next day column", () => {
+    const model = layout({
+      view: "week",
+      timeZone: "America/New_York",
+      date: new Date(2030, 7, 12),
+      businessHours: {
+        sunday: { active: true, opensAt: "00:00", closesAt: "24:00" },
+        monday: { active: true, opensAt: "00:00", closesAt: "24:00" },
+        tuesday: { active: true, opensAt: "00:00", closesAt: "24:00" },
+        wednesday: { active: true, opensAt: "00:00", closesAt: "24:00" },
+        thursday: { active: true, opensAt: "00:00", closesAt: "24:00" },
+        friday: { active: true, opensAt: "00:00", closesAt: "24:00" },
+        saturday: { active: true, opensAt: "00:00", closesAt: "24:00" },
+      },
+      appointments: [{
+        id: "night",
+        startsAt: zonedTimeToUtc("2030-08-12", 23 * 60 + 30, "America/New_York").toISOString(),
+        durationMinutes: 90,
+        clientName: "Night client",
+        status: "confirmed",
+        professionalId: "ana",
+      }],
+    });
+
+    expect(model.events.map((event) => ({
+      dayKey: event.dayKey,
+      startMinute: event.startMinute,
+      endMinute: event.endMinute,
+    }))).toEqual([
+      { dayKey: "2030-08-12", startMinute: 23 * 60 + 30, endMinute: 24 * 60 },
+      { dayKey: "2030-08-13", startMinute: 0, endMinute: 60 },
+    ]);
   });
 
   it("splits the column between colliding appointments", () => {

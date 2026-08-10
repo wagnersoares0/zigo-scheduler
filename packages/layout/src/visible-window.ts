@@ -1,4 +1,4 @@
-import { nextDateKey, zonedTimeToUtc, type TimeZone } from "@zigoschedule/scheduler-core";
+import { nextDateKey, zonedDayRangeUtc, type TimeZone } from "@zigoschedule/scheduler-core";
 import { DEFAULT_WEEK_START, dateKey, type WeekStart } from "@zigoschedule/scheduler-engine";
 
 /**
@@ -22,9 +22,9 @@ export function visibleDaysWindow(
   const firstKey = dateKey(days[0]);
   const lastKey = dateKey(days[days.length - 1]);
   return {
-    from: zonedTimeToUtc(firstKey, 0, timeZone),
+    from: zonedDayRangeUtc(firstKey, timeZone).start,
     // Half-open: up to, and not including, midnight that ends the last day.
-    to: zonedTimeToUtc(nextDateKey(lastKey), 0, timeZone),
+    to: zonedDayRangeUtc(nextDateKey(lastKey), timeZone).start,
   };
 }
 

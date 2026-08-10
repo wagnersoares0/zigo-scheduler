@@ -68,16 +68,19 @@ const statusClassName = (tone: DetailsTone): string => {
 
 export function DetailsShell({
   children,
+  dialogRef,
   label,
   onClose,
 }: {
   children: ReactNode;
+  dialogRef: RefObject<HTMLElement>;
   label: string;
   onClose: () => void;
 }) {
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950/45 px-4 py-6" onClick={onClose}>
       <section
+        ref={dialogRef}
         className="max-h-[calc(100vh-2rem)] w-full max-w-[460px] overflow-hidden rounded-[20px] bg-slate-50 shadow-2xl ring-1 ring-slate-200"
         role="dialog"
         aria-modal="true"
