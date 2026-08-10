@@ -1,0 +1,51 @@
+node_modules/
+dist/
+dist-demo/
+dist-website/
+dist-types/
+coverage/
+test-results/
+playwright-report/
+.playwright-cli/
+.vite/
+.vite-*/
+.turbo/
+.cache/
+output/
+*.log
+.DS_Store
+.env
+.env.*
+local-secrets/
+secrets/
+
+# Site, demo and examples live outside the main GitHub package repository.
+website/
+demo/
+exemplos/
+
+# Local configs and browser checks for the ignored showcase.
+/vite.config.ts
+/vite.exemplos.config.ts
+/scripts/fc-audit.mjs
+/scripts/shot-element.mjs
+/scripts/verify-all.mjs
+/scripts/verify-controls.mjs
+/scripts/verify-demos.mjs
+/scripts/verify-gestures.mjs
+/scripts/verify-portal.mjs
+/scripts/verify-recurrence.mjs
+/scripts/verify-scroll.mjs
+/scripts/verify-visual.mjs
+
+# Internal notebooks: strategy, competitor notes and license reasoning.
+# They are never published.
+notas/
+
+# Leftovers from the zigoapp extraction.
+origem/
+reference/
+/src/
+INVENTARIO.md
+PLANO.md
+*.png

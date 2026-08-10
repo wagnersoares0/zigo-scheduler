@@ -1,0 +1,62 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "@zigoschedule/scheduler-core": [
+        "packages/core/src/index.ts"
+      ],
+      "@zigoschedule/scheduler-engine": [
+        "packages/engine/src/index.ts"
+      ],
+      "@zigoschedule/scheduler-layout": [
+        "packages/layout/src/index.ts"
+      ],
+      "@zigoschedule/scheduler-interaction": [
+        "packages/interaction/src/index.ts"
+      ],
+      "@zigoschedule/scheduler-react": [
+        "packages/react/src/index.ts"
+      ],
+      "@zigoschedule/scheduler-element": [
+        "packages/element/src/index.ts"
+      ],
+      "@zigoschedule/scheduler-recurrence": [
+        "packages/recurrence/src/index.ts"
+      ]
+    },
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "packages/*/src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "origem",
+    "reference",
+    "dist",
+    "dist-demo",
+    "dist-website",
+    "dist-types",
+    "demo",
+    "exemplos",
+    "website"
+  ]
+}

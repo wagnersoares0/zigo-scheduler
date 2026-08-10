@@ -1,0 +1,10 @@
+.border,
+.border-t,
+.border-r,
+.border-b,
+.border-b-2,
+.border-l {
+  border: 0 solid;
+}
+
+@tailwind utilities;

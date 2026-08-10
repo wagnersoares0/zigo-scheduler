@@ -1,0 +1,155 @@
+{
+  "name": "@zigoschedule/scheduler-core",
+  "version": "0.2.8",
+  "description": "Domain rules for time zones, DST-safe scheduling, availability windows and localization. No DOM, no framework.",
+  "license": "MIT",
+  "author": "Wagner Silva <contato@zigoapp.com.br>",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
+  "dependencies": {},
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json",
+    "./locales/pt-BR": {
+      "types": "./dist/locales/pt-BR.d.ts",
+      "import": "./dist/locales/pt-BR.js",
+      "require": "./dist/locales/pt-BR.cjs",
+      "default": "./dist/locales/pt-BR.js"
+    },
+    "./locales/en-US": {
+      "types": "./dist/locales/en-US.d.ts",
+      "import": "./dist/locales/en-US.js",
+      "require": "./dist/locales/en-US.cjs",
+      "default": "./dist/locales/en-US.js"
+    },
+    "./locales/es-ES": {
+      "types": "./dist/locales/es-ES.d.ts",
+      "import": "./dist/locales/es-ES.js",
+      "require": "./dist/locales/es-ES.cjs",
+      "default": "./dist/locales/es-ES.js"
+    },
+    "./locales/fr-FR": {
+      "types": "./dist/locales/fr-FR.d.ts",
+      "import": "./dist/locales/fr-FR.js",
+      "require": "./dist/locales/fr-FR.cjs",
+      "default": "./dist/locales/fr-FR.js"
+    },
+    "./locales/de-DE": {
+      "types": "./dist/locales/de-DE.d.ts",
+      "import": "./dist/locales/de-DE.js",
+      "require": "./dist/locales/de-DE.cjs",
+      "default": "./dist/locales/de-DE.js"
+    },
+    "./locales/ru-RU": {
+      "types": "./dist/locales/ru-RU.d.ts",
+      "import": "./dist/locales/ru-RU.js",
+      "require": "./dist/locales/ru-RU.cjs",
+      "default": "./dist/locales/ru-RU.js"
+    },
+    "./locales/th-TH": {
+      "types": "./dist/locales/th-TH.d.ts",
+      "import": "./dist/locales/th-TH.js",
+      "require": "./dist/locales/th-TH.cjs",
+      "default": "./dist/locales/th-TH.js"
+    },
+    "./locales/it-IT": {
+      "types": "./dist/locales/it-IT.d.ts",
+      "import": "./dist/locales/it-IT.js",
+      "require": "./dist/locales/it-IT.cjs",
+      "default": "./dist/locales/it-IT.js"
+    },
+    "./locales/nl-NL": {
+      "types": "./dist/locales/nl-NL.d.ts",
+      "import": "./dist/locales/nl-NL.js",
+      "require": "./dist/locales/nl-NL.cjs",
+      "default": "./dist/locales/nl-NL.js"
+    },
+    "./locales/pl-PL": {
+      "types": "./dist/locales/pl-PL.d.ts",
+      "import": "./dist/locales/pl-PL.js",
+      "require": "./dist/locales/pl-PL.cjs",
+      "default": "./dist/locales/pl-PL.js"
+    },
+    "./locales/tr-TR": {
+      "types": "./dist/locales/tr-TR.d.ts",
+      "import": "./dist/locales/tr-TR.js",
+      "require": "./dist/locales/tr-TR.cjs",
+      "default": "./dist/locales/tr-TR.js"
+    },
+    "./locales/id-ID": {
+      "types": "./dist/locales/id-ID.d.ts",
+      "import": "./dist/locales/id-ID.js",
+      "require": "./dist/locales/id-ID.cjs",
+      "default": "./dist/locales/id-ID.js"
+    },
+    "./locales/ja-JP": {
+      "types": "./dist/locales/ja-JP.d.ts",
+      "import": "./dist/locales/ja-JP.js",
+      "require": "./dist/locales/ja-JP.cjs",
+      "default": "./dist/locales/ja-JP.js"
+    },
+    "./locales/ko-KR": {
+      "types": "./dist/locales/ko-KR.d.ts",
+      "import": "./dist/locales/ko-KR.js",
+      "require": "./dist/locales/ko-KR.cjs",
+      "default": "./dist/locales/ko-KR.js"
+    },
+    "./locales/zh-CN": {
+      "types": "./dist/locales/zh-CN.d.ts",
+      "import": "./dist/locales/zh-CN.js",
+      "require": "./dist/locales/zh-CN.cjs",
+      "default": "./dist/locales/zh-CN.js"
+    },
+    "./locales/ar-SA": {
+      "types": "./dist/locales/ar-SA.d.ts",
+      "import": "./dist/locales/ar-SA.js",
+      "require": "./dist/locales/ar-SA.cjs",
+      "default": "./dist/locales/ar-SA.js"
+    },
+    "./locales/hi-IN": {
+      "types": "./dist/locales/hi-IN.d.ts",
+      "import": "./dist/locales/hi-IN.js",
+      "require": "./dist/locales/hi-IN.cjs",
+      "default": "./dist/locales/hi-IN.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wagnersoares0/zigo-scheduler.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://zigoschedule.com",
+  "bugs": {
+    "url": "https://github.com/wagnersoares0/zigo-scheduler/issues"
+  },
+  "keywords": [
+    "zigo",
+    "zigoschedule",
+    "scheduler",
+    "calendar",
+    "appointments",
+    "booking",
+    "availability",
+    "appointment-scheduler",
+    "timezone",
+    "dst",
+    "business-hours",
+    "i18n"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

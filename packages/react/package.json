@@ -1,0 +1,69 @@
+{
+  "name": "@zigoschedule/scheduler-react",
+  "version": "0.2.8",
+  "description": "React professional scheduler with resource columns, drag/drop, resize, business hours, buffers, time zones and DST-safe appointments.",
+  "license": "MIT",
+  "author": "Wagner Silva <contato@zigoapp.com.br>",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@zigoschedule/scheduler-core": "^0.2.8",
+    "@zigoschedule/scheduler-engine": "^0.2.8",
+    "@zigoschedule/scheduler-layout": "^0.2.8",
+    "@zigoschedule/scheduler-interaction": "^0.2.8"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json",
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": [
+    "./dist/styles.css"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wagnersoares0/zigo-scheduler.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://zigoschedule.com",
+  "bugs": {
+    "url": "https://github.com/wagnersoares0/zigo-scheduler/issues"
+  },
+  "keywords": [
+    "zigo",
+    "zigoschedule",
+    "scheduler",
+    "calendar",
+    "appointments",
+    "booking",
+    "react",
+    "typescript",
+    "multi-professional",
+    "resources",
+    "drag-and-drop",
+    "resize",
+    "timezone",
+    "dst",
+    "business-hours",
+    "resource-scheduler",
+    "appointment-scheduler"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

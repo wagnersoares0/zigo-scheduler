@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Zigo Scheduler HTML Template</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f8fafc;
+      }
+
+      .page {
+        box-sizing: border-box;
+        height: 100%;
+        padding: 24px;
+      }
+
+      zigo-scheduler {
+        display: block;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <zigo-scheduler
+        id="schedule"
+        date="2026-08-12"
+        view="day"
+        timezone="America/New_York"
+        locale="en-US"
+        slot-minutes="15"
+        week-starts-on="0"
+      ></zigo-scheduler>
+    </main>
+
+    <script type="module">
+      import "https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.2.8/dist/zigo-scheduler.global.js";
+
+      const schedule = document.getElementById("schedule");
+
+      schedule.professionals = [
+        { id: "maya", name: "Dr. Maya Lee", photoUrl: "/team/maya.jpg", opensAt: "09:00", closesAt: "17:00" },
+        { id: "noah", name: "Noah Carter", photoUrl: "/team/noah.jpg", opensAt: "08:30", closesAt: "16:30" },
+      ];
+
+      schedule.businessHours = {
+        sunday: { active: false },
+        monday: { active: true, opensAt: "09:00", closesAt: "17:00" },
+        tuesday: { active: true, opensAt: "09:00", closesAt: "17:00" },
+        wednesday: { active: true, opensAt: "09:00", closesAt: "17:00" },
+        thursday: { active: true, opensAt: "09:00", closesAt: "17:00" },
+        friday: { active: true, opensAt: "09:00", closesAt: "17:00" },
+        saturday: { active: true, opensAt: "09:00", closesAt: "13:00" },
+      };
+
+      schedule.lunchBreak = { startMinute: 720, endMinute: 780, startsAt: "12:00", endsAt: "13:00" };
+      schedule.appointments = [
+        {
+          id: "appt_1001",
+          startsAt: "2026-08-12T16:00:00.000Z",
+          durationMinutes: 60,
+          bufferAfterMinutes: 10,
+          clientName: "Olivia Carter",
+          clientPhone: "+1 415 555 0198",
+          professionalId: "maya",
+          status: "confirmed",
+          paymentStatus: "paid",
+          price: 120,
+          services: [{ name: "Physical therapy follow-up", durationMinutes: 60, price: 120 }],
+          appointmentColor: "#2563eb",
+        },
+      ];
+    </script>
+  </body>
+</html>

@@ -1,0 +1,157 @@
+/**
+ * @zigoschedule/scheduler-engine - the calendar model.
+ *
+ * Turns appointments into positioned events: overlap resolution, grid geometry,
+ * hit testing, view definitions. Still pure TypeScript - it computes where a
+ * box goes, never how it is drawn.
+ */
+export * from "./engine";
+export {
+  DEFAULT_WEEK_START,
+  dateKey,
+  first,
+  fromDayKey,
+  getBreakConflictMessage,
+  getBreakEndMinute,
+  getBreakEndsAt,
+  getBreakStartMinute,
+  getDurationFromRange,
+  isMinuteInsideBreakWindow,
+  isValidHHMM,
+  monthEnd,
+  monthStart,
+  normalizeBreakWindow,
+  normalizeHHMM,
+  normalizeWeekStart,
+  rangeOverlapsBreakWindow,
+  resolveBreakWindow,
+  toHHMM,
+  toMin,
+  weekDays,
+  weekStart,
+  weekdayOrder,
+  zoneKey,
+  zoneMins,
+  zoneNowParts,
+  type WeekStart,
+} from "./utils/time";
+export * from "./utils/layout";
+export * from "./utils/snap";
+export {
+  formatHumanDuration,
+  formatPhone,
+  getAppointmentServiceDisplayNames,
+  getAppointmentServiceLabel,
+  getAppointmentServiceLinks,
+  getNameInitials,
+  isCanceledStatus,
+  isCompletedStatus,
+  isLockedStatus,
+  normalizeAppointmentStatus,
+  normalizeNullableText,
+  statusBadge,
+  type AppointmentStatus,
+} from "./utils/format";
+export {
+  getEffectiveBusinessHoursForDay,
+  getGridBusinessHoursRange,
+  getProfessionalBreakWindowForDay,
+  getProfessionalBusinessHoursMessage,
+  getProfessionalBusinessHoursRange,
+  getProfessionalDaySchedule,
+  getWeekdayBusinessHours,
+  resolveWeekdayConfigKey,
+  type BusinessHoursDefaults,
+  type EffectiveBusinessHours,
+  type GetEffectiveBusinessHoursForDayInput,
+  type GetProfessionalBreakWindowForDayInput,
+} from "./utils/business-hours";
+export * from "./utils/agenda-derived-data";
+export * from "./utils/selection";
+export * from "./utils/slot-availability";
+export {
+  getAdvancePaymentAmount,
+  getAdvancePaymentStatusLabel,
+  getAppointmentPaymentSummary,
+  parseMoneyInput,
+} from "./utils/money";
+export * from "./utils/text";
+export {
+  getBlockDisplayInfo,
+  isTimeOffBlock,
+  type BlockDisplayInfo,
+} from "./utils/block-labels";
+export * from "./utils/appointment-card-status";
+export {
+  getAppointmentClientName,
+  getAppointmentClientPhone,
+  getAppointmentBufferAfterMinutes,
+  getAppointmentBufferBeforeMinutes,
+  getAppointmentColor,
+  getAppointmentColorIsCustom,
+  getAppointmentDurationMinutes,
+  getAppointmentNotes,
+  getAppointmentPaymentStatus,
+  getAppointmentPrice,
+  getAppointmentProfessionalId,
+  getAppointmentRecurrenceExceptions,
+  getAppointmentRecurrenceOverrides,
+  getAppointmentRecurrenceRule,
+  getAppointmentServiceNames,
+  getAppointmentServicesCount,
+  getAppointmentStartsAt,
+  getBlockDate,
+  getBlockEndTime,
+  getBlockProfessionalId,
+  getBlockReason,
+  getBlockStartTime,
+  getProfessionalClosesAt,
+  getProfessionalName,
+  getProfessionalOpensAt,
+  getProfessionalPhotoUrl,
+  getServiceDurationMinutes,
+  getServiceName,
+  getServicePrice,
+} from "./utils/appointment-fields";
+export {
+  DAY_CANCELED_CARD_THEME,
+  DAY_PROF_CARD_THEMES,
+  BREAK_TIME_MESSAGE,
+  DRAWER_STATUS_OPTIONS,
+  GRID_MIN,
+  MAX_APPOINTMENT_DURATION_MINUTES,
+  MONTH_DAY_CELL_HEIGHT_PX,
+  PAST_TIME_MESSAGE,
+  SLOT_H,
+  STATUS_OPTIONS,
+  STATUS_VALUES,
+  WEEKDAY_KEY_BY_DOW,
+  getAppointmentCardTheme,
+  getProfessionalCardTheme,
+  getProfessionalCardThemeByIndex,
+  getProfessionalCardThemeForVisibleList,
+} from "./constants";
+export type {
+  AgendaGridSelectionDragRef,
+  AgendaInitialGridData,
+  AgendaListRow,
+  AgendaMetadata,
+  Appointment,
+  AppointmentOccurrenceOverride,
+  AppointmentOccurrencePatch,
+  AppointmentProductLink,
+  AppointmentServiceLink,
+  Block,
+  BreakWindow,
+  BusinessHours,
+  DayActionMenu,
+  DayProfCardTheme,
+  DaySelection,
+  LegacyView,
+  Professional,
+  ProfessionalDaySchedule,
+  Service,
+  View,
+  WeekdayBusinessHours,
+  WeekdayKey,
+} from "./types";

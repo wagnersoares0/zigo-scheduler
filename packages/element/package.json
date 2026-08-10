@@ -1,0 +1,63 @@
+{
+  "name": "@zigoschedule/scheduler-element",
+  "version": "0.2.8",
+  "description": "<zigo-scheduler> Web Component for professional scheduling in HTML/PHP/Laravel/Django with drag/drop, resize, resources and time zones.",
+  "license": "MIT",
+  "author": "Wagner Silva <contato@zigoapp.com.br>",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@zigoschedule/scheduler-core": "^0.2.8",
+    "@zigoschedule/scheduler-engine": "^0.2.8",
+    "@zigoschedule/scheduler-interaction": "^0.2.8",
+    "@zigoschedule/scheduler-layout": "^0.2.8"
+  },
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wagnersoares0/zigo-scheduler.git",
+    "directory": "packages/element"
+  },
+  "homepage": "https://zigoschedule.com",
+  "bugs": {
+    "url": "https://github.com/wagnersoares0/zigo-scheduler/issues"
+  },
+  "keywords": [
+    "zigo",
+    "zigoschedule",
+    "scheduler",
+    "calendar",
+    "appointments",
+    "booking",
+    "web-component",
+    "custom-element",
+    "drag-and-drop",
+    "resize",
+    "timezone",
+    "dst",
+    "multi-professional",
+    "resource-scheduler",
+    "appointment-scheduler",
+    "business-hours",
+    "cdn"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
