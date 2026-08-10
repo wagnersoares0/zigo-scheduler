@@ -1,6 +1,6 @@
 {
   "name": "@zigoschedule/scheduler-recurrence",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Recurring appointments via the iCalendar RRULE standard, expanded in the business's own time zone.",
   "license": "MIT",
   "author": "Wagner Silva <contato@zigoapp.com.br>",
@@ -8,9 +8,10 @@
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "@zigoschedule/scheduler-core": "^0.3.1",
-    "@zigoschedule/scheduler-engine": "^0.3.1",
-    "@zigoschedule/scheduler-layout": "^0.3.1"
+    "@zigoschedule/scheduler-core": "^0.3.2",
+    "@zigoschedule/scheduler-engine": "^0.3.2",
+    "@zigoschedule/scheduler-layout": "^0.3.2",
+    "rrule": "^2.8.1"
   },
   "module": "./dist/index.js",
   "exports": {

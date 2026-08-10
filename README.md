@@ -30,7 +30,8 @@ Quick links: [Install](#install-the-entry-you-need) ·
 [Capability Matrix](#professional-scheduler-capability-matrix) ·
 [React Example](#react-complete-minimum-example) ·
 [Web Component](#html-php-laravel-django-rails) ·
-[Headless Layout](#headless-layout) · [License](#license)
+[Headless Layout](#headless-layout) ·
+[API Reference](API_REFERENCE.md) · [License](#license)
 
 ## What It Includes
 
@@ -107,7 +108,7 @@ host-owned persistence.
 | CDN/no-build usage | Included | Global browser bundle for prototypes, sandboxes and server-rendered pages. |
 | Headless/custom UI | Included | `@zigoschedule/scheduler-layout` returns rows, columns, events, buffers and hit testing. |
 | Vue/Angular/Svelte usage | Supported via Web Component | Dedicated wrappers are not required for first adoption. |
-| Keyboard accessibility | Partial | Cards are focusable buttons and open by keyboard; keyboard move/resize is roadmap. |
+| Keyboard accessibility | Partial | Cards are focusable buttons, open by keyboard, and React supports keyboard move/resize; full grid keyboard navigation remains roadmap. |
 | Horizontal resource timeline | Roadmap | Current resource view is vertical columns; horizontal timeline is a future larger feature. |
 | Multi-resource appointment | Roadmap | Current appointments attach to one primary resource; doctor + room + equipment is planned. |
 | Capacity/group bookings | Roadmap | Current model is appointment-based; capacity slots/classes are planned. |
@@ -276,7 +277,7 @@ simple configuration and properties for arrays or objects.
 </div>
 
 <script type="module">
-  import "https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.3.1/dist/zigo-scheduler.global.js";
+  import "https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.3.2/dist/zigo-scheduler.global.js";
 
   const schedule = document.getElementById("schedule");
 

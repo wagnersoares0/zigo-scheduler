@@ -5,6 +5,7 @@ import type {
   AppointmentColor,
   AppointmentColorMode,
 } from "@zigoschedule/scheduler-core";
+import { zonedTimeToUtc } from "@zigoschedule/scheduler-core";
 import type {
   Appointment,
   AgendaGridSelectionDragRef,
@@ -29,6 +30,7 @@ import type { DragPayload } from "@zigoschedule/scheduler-interaction";
 import {
   buildAgendaEngineContext,
   buildMoveMutation,
+  buildResizeMutation,
   findAppointmentEvent,
   validateAppointmentMutation,
   type AgendaResolvedOptions,
@@ -53,20 +55,73 @@ import { InlineGridNotice } from "./InlineGridNotice";
 import { useAgendaGridDndHitSystem } from "./useAgendaGridDndHitSystem";
 import { useAgendaGridDragResizeCallbacks } from "./useAgendaGridDragResizeCallbacks";
 import { useAgendaGridLayoutModel } from "./useAgendaGridLayoutModel";
+import type { AgendaGridColumn as AgendaGridLayoutColumn } from "./useAgendaGridLayoutModel";
 import { useAgendaGridSelectionPreview } from "./useAgendaGridSelectionPreview";
 import { useAgendaGridTimeHoverTooltip } from "./useAgendaGridTimeHoverTooltip";
+import { decideAppointmentMutation } from "./decideAppointmentMutation";
 import { useAgendaMessages, useAgendaTimeZone } from "../../config/AgendaConfigContext";
 import { useAgendaClock } from "../../hooks/useAgendaClock";
 import { validationMessagesFromAgendaMessages } from "./validationMessages";
 
 const DND_SNAP_MINUTES = 5;
 const EMPTY_COLUMN_ITEMS: { ags: Appointment[]; bloqs: Block[] } = { ags: [], bloqs: [] };
+const buildDataHora = (dayKey: string, minute: number, timeZone: string): string =>
+  zonedTimeToUtc(dayKey, minute, timeZone).toISOString();
+const KEYBOARD_COLUMN_STEP = { left: -1, right: 1, up: 0, down: 0 } as const;
+const KEYBOARD_MINUTE_STEP = { left: 0, right: 0, up: -1, down: 1 } as const;
 
 type GridBusinessHours = {
   startMinute: number;
   endMinute: number;
   isClosed?: boolean;
   closedMessage?: string;
+};
+
+type KeyboardMoveInput = {
+  agId: string;
+  colKey: string;
+  dayKey: string;
+  profId: string | null;
+  startMinute: number;
+  durationMinutes: number;
+  direction: "up" | "down" | "left" | "right";
+};
+
+type KeyboardResizeInput = {
+  agId: string;
+  dayKey: string;
+  profId: string | null;
+  startMinute: number;
+  endMinute: number;
+  direction: "shorter" | "longer";
+};
+
+const resolveKeyboardMoveTarget = ({
+  input,
+  colDefs,
+  startDay,
+  endDay,
+  gridMin,
+}: {
+  input: KeyboardMoveInput;
+  colDefs: AgendaGridLayoutColumn[];
+  startDay: number;
+  endDay: number;
+  gridMin: number;
+}) => {
+  const colStep = KEYBOARD_COLUMN_STEP[input.direction];
+  const currentColIndex = colDefs.findIndex((col) => col.key === input.colKey);
+  const nextColumn = colStep ? colDefs[currentColIndex + colStep] : null;
+  const latestStart = Math.max(startDay, endDay - input.durationMinutes);
+  const movedStart = input.startMinute + KEYBOARD_MINUTE_STEP[input.direction] * gridMin;
+  const startMinute = Math.max(startDay, Math.min(latestStart, movedStart));
+
+  return {
+    dayKey: nextColumn?.dayKey ?? input.dayKey,
+    resourceId: nextColumn ? nextColumn.profId || null : input.profId,
+    startMinute,
+    endMinute: startMinute + input.durationMinutes,
+  };
 };
 
 type Props = {
@@ -543,6 +598,96 @@ export const AgendaGrid = memo(function AgendaGrid({
     columnMinWidth,
   });
 
+  const reportKeyboardMutationError = useCallback(
+    (message: string) => {
+      onSetDayClosedNotice(message);
+      setGridNotice(message);
+      onMutationError?.(message);
+    },
+    [onMutationError, onSetDayClosedNotice],
+  );
+
+  const commitKeyboardMove = useCallback(
+    async (input: KeyboardMoveInput) => {
+      const appointment = findAppointmentEvent(agendaEngine, input.agId);
+      const nextRange = resolveKeyboardMoveTarget({ input, colDefs, startDay, endDay, gridMin });
+      const mutation = appointment
+        ? buildMoveMutation(appointment, nextRange)
+        : null;
+      const decision = decideAppointmentMutation(agendaEngine, appointment, mutation, validationMessages);
+
+      if (decision.status === "noop") return;
+      if (decision.status !== "ready") {
+        reportKeyboardMutationError(decision.message);
+        return;
+      }
+
+      try {
+        onSetDayClosedNotice(null);
+        await onDropAg(
+          input.agId,
+          buildDataHora(decision.mutation.nextRange.dayKey, decision.mutation.nextRange.startMinute, timeZone),
+          decision.mutation.nextRange.resourceId,
+        );
+      } catch (error) {
+        const message = error instanceof Error && error.message ? error.message : messages.invalidDuration;
+        reportKeyboardMutationError(message);
+      }
+    },
+    [
+      agendaEngine,
+      colDefs,
+      endDay,
+      gridMin,
+      messages.invalidDuration,
+      onDropAg,
+      onSetDayClosedNotice,
+      reportKeyboardMutationError,
+      startDay,
+      timeZone,
+      validationMessages,
+    ],
+  );
+
+  const commitKeyboardResize = useCallback(
+    async ({ agId, startMinute, endMinute, direction }: KeyboardResizeInput) => {
+      const appointment = findAppointmentEvent(agendaEngine, agId);
+      const nextEndMinute = Math.max(
+        startMinute + gridMin,
+        Math.min(endDay, direction === "shorter" ? endMinute - gridMin : endMinute + gridMin),
+      );
+      const mutation = appointment ? buildResizeMutation(appointment, nextEndMinute) : null;
+      const decision = decideAppointmentMutation(agendaEngine, appointment, mutation, validationMessages);
+
+      if (decision.status === "noop") return;
+      if (decision.status !== "ready") {
+        reportKeyboardMutationError(decision.message);
+        return;
+      }
+
+      try {
+        onSetDayClosedNotice(null);
+        await onResizeAg(agId, {
+          direction: "end",
+          duracaoMinutos: decision.mutation.durationMinutes,
+        });
+      } catch (error) {
+        const message = error instanceof Error && error.message ? error.message : messages.invalidDuration;
+        reportKeyboardMutationError(message);
+      }
+    },
+    [
+      agendaEngine,
+      endDay,
+      gridMin,
+      messages.invalidDuration,
+      onResizeAg,
+      onSetDayClosedNotice,
+      reportKeyboardMutationError,
+      validationMessages,
+    ],
+  );
+
   useEffect(() => {
     syncHeaderScroll();
   }, [cols, gridDayKeys, syncHeaderScroll]);
@@ -704,6 +849,8 @@ export const AgendaGrid = memo(function AgendaGrid({
                 onCloseDaySelection={onCloseDaySelection}
                 onOpenBloqueio={onOpenBloqueio}
                 onOpenAgendamento={onOpenAgendamento}
+                onKeyboardMoveAgendamento={commitKeyboardMove}
+                onKeyboardResizeAgendamento={commitKeyboardResize}
                 onOpenMoreAppointments={openMoreAppointments}
                 dndCallbacks={dndCallbacks}
                 resizeCallbacks={resizeCallbacks}

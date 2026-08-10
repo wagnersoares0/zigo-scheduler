@@ -1,6 +1,6 @@
 {
   "name": "@zigoschedule/scheduler-monorepo",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "description": "Professional scheduling UI for appointment booking, resources, drag/drop, resize, time zones and DST-safe business hours",
   "license": "MIT",

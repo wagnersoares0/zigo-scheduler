@@ -39,6 +39,19 @@ const getProfessionalInitials = (name: string): string => {
 };
 
 type AppointmentCardVariant = "day" | "week";
+const KEYBOARD_MOVE_DIRECTIONS = {
+  ArrowUp: "up",
+  ArrowDown: "down",
+  ArrowLeft: "left",
+  ArrowRight: "right",
+} as const;
+const KEYBOARD_RESIZE_DIRECTIONS = {
+  ArrowUp: "shorter",
+  ArrowDown: "longer",
+} as const;
+
+type KeyboardMoveKey = keyof typeof KEYBOARD_MOVE_DIRECTIONS;
+type KeyboardResizeKey = keyof typeof KEYBOARD_RESIZE_DIRECTIONS;
 
 type AgCardProps = {
   ag: Appointment;
@@ -67,6 +80,22 @@ type AgCardProps = {
   calendarView: AgendaViewId;
   onAgendaCallbackError?: (error: Error | null) => void;
   onOpen: (ag: Appointment, dayKey: string, s: number, e: number, jsEvent?: AgendaNativeInteractionEvent) => void;
+  onKeyboardMove?: (input: {
+    agId: string;
+    dayKey: string;
+    profId: string | null;
+    startMinute: number;
+    durationMinutes: number;
+    direction: "up" | "down" | "left" | "right";
+  }) => void;
+  onKeyboardResize?: (input: {
+    agId: string;
+    dayKey: string;
+    profId: string | null;
+    startMinute: number;
+    endMinute: number;
+    direction: "shorter" | "longer";
+  }) => void;
 };
 
 export const AgCard = memo(function AgCard({
@@ -96,6 +125,8 @@ export const AgCard = memo(function AgCard({
   calendarView,
   onAgendaCallbackError,
   onOpen,
+  onKeyboardMove,
+  onKeyboardResize,
 }: AgCardProps) {
   const messages = useAgendaMessages();
   const locale = useAgendaLocale();
@@ -321,7 +352,7 @@ export const AgCard = memo(function AgCard({
       ref={btnRef}
       type="button"
       aria-disabled={isPendingMutation}
-      aria-keyshortcuts="Enter Space"
+      aria-keyshortcuts="Enter Space Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight Alt+Shift+ArrowUp Alt+Shift+ArrowDown"
       aria-label={messages.openAppointmentDetails({
         clientName,
         start: formatAgendaTime(s, locale),
@@ -337,6 +368,35 @@ export const AgCard = memo(function AgCard({
           return;
         }
         onOpen(ag, dayKey, s, e, ev.nativeEvent);
+      }}
+      onKeyDown={(ev) => {
+        if (!canDrag && !canResize) return;
+        const moveDirection = KEYBOARD_MOVE_DIRECTIONS[ev.key as KeyboardMoveKey];
+        if (!ev.altKey || !moveDirection) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        const resizeDirection = KEYBOARD_RESIZE_DIRECTIONS[ev.key as KeyboardResizeKey];
+        if (ev.shiftKey && resizeDirection && canResize) {
+          onKeyboardResize?.({
+            agId: ag.id,
+            dayKey,
+            profId: agProfId,
+            startMinute: s,
+            endMinute: e,
+            direction: resizeDirection,
+          });
+          return;
+        }
+        if (canDrag) {
+          onKeyboardMove?.({
+            agId: ag.id,
+            dayKey,
+            profId: agProfId,
+            startMinute: s,
+            durationMinutes: agDuracao,
+            direction: moveDirection,
+          });
+        }
       }}
       onMouseEnter={(ev) => {
         dispatchMouseEnter(ev.nativeEvent);

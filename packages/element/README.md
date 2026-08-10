@@ -38,6 +38,9 @@ Roadmap, not included yet: horizontal resource timeline, multi-resource
 appointments, capacity/group bookings, keyboard move/resize, external drag from
 an outside list and scheduling assistant.
 
+For every attribute, property, DOM event and edge-case rule, see the repository
+[`API_REFERENCE.md`](https://github.com/wagnersoares0/zigo-scheduler/blob/main/API_REFERENCE.md).
+
 ## Install
 
 ```bash
@@ -54,7 +57,7 @@ With a CDN:
 
 ```html
 <script type="module"
-  src="https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.3.1/dist/zigo-scheduler.global.js"></script>
+  src="https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.3.2/dist/zigo-scheduler.global.js"></script>
 ```
 
 ## Minimal Example

@@ -217,9 +217,9 @@ try {
     }
     if (name === "recurrence") {
       check(
-        "recurrence does not install rrule separately",
-        !currentManifest.dependencies?.rrule,
-        "rrule is bundled with its license notice"
+        "recurrence declares rrule for scanners",
+        currentManifest.dependencies?.rrule === "^2.8.1",
+        "rrule is declared and bundled with its license notice"
       );
     }
   }

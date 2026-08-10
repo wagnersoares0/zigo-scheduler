@@ -212,7 +212,76 @@ describe("Agenda", () => {
 
     expect(html).toContain('data-ag-buffer="before"');
     expect(html).toContain('data-ag-buffer="after"');
-    expect(html).toContain('aria-keyshortcuts="Enter Space"');
+    expect(html).toContain('aria-keyshortcuts="Enter Space Alt+ArrowUp');
+    expect(html).toContain("Alt+Shift+ArrowDown");
+  });
+
+  it("moves and resizes appointments from the keyboard through the public callbacks", async () => {
+    const container = document.createElement("div");
+    container.style.height = "720px";
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    const moved: Array<{ appointmentId: string; startsAt: string; professionalId: string | null }> = [];
+    const resized: Array<{ appointmentId: string; durationMinutes: number; startsAt?: string }> = [];
+
+    try {
+      await act(async () => {
+        root.render(
+          <Agenda
+            date={MONDAY}
+            appointments={[APPOINTMENTS[0]]}
+            professionals={PROFESSIONALS}
+            businessHours={BUSINESS_HOURS}
+            timeZone={TIME_ZONE}
+            view="day"
+            blockPastSlots={false}
+            onMove={(change) => {
+              moved.push(change);
+            }}
+            onResize={(change) => {
+              resized.push(change);
+            }}
+          />
+        );
+      });
+
+      const card = container.querySelector<HTMLButtonElement>('button[aria-label*="Maya Lee"]');
+      expect(card).toBeTruthy();
+      card!.focus();
+
+      await act(async () => {
+        card!.dispatchEvent(new KeyboardEvent("keydown", {
+          bubbles: true,
+          cancelable: true,
+          altKey: true,
+          key: "ArrowDown",
+        }));
+      });
+
+      expect(moved).toHaveLength(1);
+      expect(moved[0]).toMatchObject({
+        appointmentId: "1",
+        professionalId: "ana",
+      });
+      expect(moved[0].startsAt).toBe(at("2026-08-03", "09:30"));
+
+      await act(async () => {
+        card!.dispatchEvent(new KeyboardEvent("keydown", {
+          bubbles: true,
+          cancelable: true,
+          altKey: true,
+          shiftKey: true,
+          key: "ArrowDown",
+        }));
+      });
+
+      expect(resized).toEqual([{ appointmentId: "1", durationMinutes: 90 }]);
+    } finally {
+      await act(async () => {
+        root.unmount();
+      });
+      container.remove();
+    }
   });
 
   it("renders an empty calendar without appointments", () => {

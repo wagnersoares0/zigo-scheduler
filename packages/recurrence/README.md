@@ -12,6 +12,10 @@ Recurrence is intentionally outside the base React/Web Component bundles. Apps
 with weekly clients, therapy plans, classes or maintenance routes can opt in;
 simple appointment products do not carry RRULE weight.
 
+`rrule` is declared as a package dependency for enterprise dependency scanners
+and bundled into this optional entry for browser/CDN usage. The npm package also
+publishes `dist/rrule.LICENSE.txt`.
+
 ## Install
 
 ```bash

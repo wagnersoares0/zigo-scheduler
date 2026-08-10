@@ -5,7 +5,7 @@
   "packages/layout/dist/index.js": 20854,
   "packages/interaction/dist/index.js": 16588,
   "packages/element/dist/index.js": 61390,
-  "packages/react/dist/index.js": 144265,
+  "packages/react/dist/index.js": 149840,
   "packages/react/dist/chunks/*.js": 78116,
   "packages/react/dist/styles.css": 44890,
   "packages/element/dist/zigo-scheduler.global.js": 84300,

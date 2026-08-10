@@ -174,6 +174,23 @@ type AgendaGridColumnProps = {
     start: number,
     end: number,
   ) => void;
+  onKeyboardMoveAgendamento: (input: {
+    agId: string;
+    colKey: string;
+    dayKey: string;
+    profId: string | null;
+    startMinute: number;
+    durationMinutes: number;
+    direction: "up" | "down" | "left" | "right";
+  }) => void;
+  onKeyboardResizeAgendamento: (input: {
+    agId: string;
+    dayKey: string;
+    profId: string | null;
+    startMinute: number;
+    endMinute: number;
+    direction: "shorter" | "longer";
+  }) => void;
   onOpenMoreAppointments: (
     dayKey: string,
     items: AgendaMonthMoreItem[],
@@ -231,6 +248,8 @@ export const AgendaGridColumn = memo(function AgendaGridColumn({
   onCloseDaySelection,
   onOpenBloqueio,
   onOpenAgendamento,
+  onKeyboardMoveAgendamento,
+  onKeyboardResizeAgendamento,
   onOpenMoreAppointments,
   dndCallbacks,
   resizeCallbacks,
@@ -831,6 +850,10 @@ export const AgendaGridColumn = memo(function AgendaGridColumn({
               calendarView={calendarView}
               onAgendaCallbackError={onAgendaCallbackError}
               onOpen={onOpenAgendamento}
+              onKeyboardMove={(input) =>
+                onKeyboardMoveAgendamento({ ...input, colKey })
+              }
+              onKeyboardResize={onKeyboardResizeAgendamento}
             />
           </Fragment>
         );

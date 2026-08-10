@@ -158,6 +158,14 @@ height, the vertical scroll area has no reliable frame.
 Use `slotMinutes` for day view density: `5`, `10`, `15`, `20` or `30`.
 Use `weekScaleMinutes` for week view density: `30` or `60`.
 
+Keyboard basics are built in. Appointment cards open with Enter/Space, move with
+Alt+Arrow keys and resize with Alt+Shift+ArrowUp/Down. Keyboard changes use the
+same conflict, business-hours, break, buffer, locked-status and DST validation
+as pointer drag and resize.
+
+For every prop, callback payload and edge-case rule, see the repository
+[`API_REFERENCE.md`](https://github.com/wagnersoares0/zigo-scheduler/blob/main/API_REFERENCE.md).
+
 ## Appointment Details
 
 By default, the React package opens a centered details modal when no

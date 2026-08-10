@@ -5,6 +5,26 @@ All notable changes to Zigo Scheduler will be documented here.
 The project follows the spirit of Keep a Changelog. Releases are still pre-1.0,
 so minor versions may refine public contracts before the stable API is cut.
 
+## [0.3.2] - 2026-08-10
+
+### Added
+
+- Added a complete public API reference covering React props, callbacks, Web
+  Component attributes/events, public data shapes and edge-case behavior.
+- React appointment cards now support keyboard move and resize shortcuts through
+  the same validation path used by drag and resize.
+
+### Changed
+
+- `@zigoschedule/scheduler-recurrence` now declares `rrule` as a runtime
+  dependency for enterprise dependency scanning while still bundling it in the
+  optional recurrence entry.
+
+### Documentation
+
+- README, React README and Web Component README now link to the public API
+  reference.
+
 ## [0.3.1] - 2026-08-10
 
 ### Added
