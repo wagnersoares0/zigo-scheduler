@@ -5,49 +5,92 @@ export type View = "day" | "week" | "month" | "list";
 /** Legacy view ids accepted at runtime for older Zigo integrations. */
 export type LegacyView = View | "lista";
 
-export type Professional = {
+export type SchedulerProfessional = {
   id: string;
-  /** Display name. `nome` remains supported for existing Zigo backends. */
   name?: string;
-  nome?: string;
-  /** Public profile/avatar URL. `foto_url` remains supported for existing Zigo backends. */
   photoUrl?: string | null;
-  foto_url?: string | null;
   opensAt?: string | null;
-  horario_abertura?: string | null;
   closesAt?: string | null;
-  horario_fechamento?: string | null;
   schedule?: ProfessionalDaySchedule[];
+};
+
+export type LegacyProfessionalFields = {
+  /** @deprecated Use `name`. */
+  nome?: string;
+  /** @deprecated Use `photoUrl`. */
+  foto_url?: string | null;
+  /** @deprecated Use `opensAt`. */
+  horario_abertura?: string | null;
+  /** @deprecated Use `closesAt`. */
+  horario_fechamento?: string | null;
+  /** @deprecated Use `schedule`. */
   horarios_profissional?: ProfessionalDaySchedule[];
 };
 
-export type ProfessionalDaySchedule = {
+/**
+ * Backward-compatible professional input.
+ *
+ * New integrations should prefer `SchedulerProfessional`; the extra fields are
+ * accepted only to keep older Zigo-shaped backends working.
+ */
+export type Professional = SchedulerProfessional & LegacyProfessionalFields;
+
+export type SchedulerProfessionalDaySchedule = {
   dayOfWeek?: number;
-  dia_semana?: number;
   startTime?: string | null;
-  hora_inicio?: string | null;
   endTime?: string | null;
-  hora_fim?: string | null;
   active?: boolean | string | number | null;
-  ativo?: boolean | string | number | null;
   hasBreak?: boolean | string | number | null;
-  tem_pausa?: boolean | string | number | null;
   breakStartsAt?: string | null;
-  pausa_inicio?: string | null;
   breakEndsAt?: string | null;
+};
+
+export type LegacyProfessionalDayScheduleFields = {
+  /** @deprecated Use `dayOfWeek`. */
+  dia_semana?: number;
+  /** @deprecated Use `startTime`. */
+  hora_inicio?: string | null;
+  /** @deprecated Use `endTime`. */
+  hora_fim?: string | null;
+  /** @deprecated Use `active`. */
+  ativo?: boolean | string | number | null;
+  /** @deprecated Use `hasBreak`. */
+  tem_pausa?: boolean | string | number | null;
+  /** @deprecated Use `breakStartsAt`. */
+  pausa_inicio?: string | null;
+  /** @deprecated Use `breakEndsAt`. */
   pausa_fim?: string | null;
 };
 
-export type Service = {
+/**
+ * Backward-compatible professional schedule input.
+ *
+ * New integrations should prefer `SchedulerProfessionalDaySchedule`.
+ */
+export type ProfessionalDaySchedule = SchedulerProfessionalDaySchedule & LegacyProfessionalDayScheduleFields;
+
+export type SchedulerService = {
   id: string;
-  /** Service name. `nome` remains supported for existing Zigo backends. */
   name?: string;
-  nome?: string;
   durationMinutes?: number;
-  duracao_minutos?: number;
   price?: number;
+};
+
+export type LegacyServiceFields = {
+  /** @deprecated Use `name`. */
+  nome?: string;
+  /** @deprecated Use `durationMinutes`. */
+  duracao_minutos?: number;
+  /** @deprecated Use `price`. */
   preco?: number;
 };
+
+/**
+ * Backward-compatible service input.
+ *
+ * New integrations should prefer `SchedulerService`.
+ */
+export type Service = SchedulerService & LegacyServiceFields;
 
 export type WeekdayKey =
   | "sunday"
@@ -65,14 +108,27 @@ export type WeekdayKey =
   | "sabado"
   | "domingo";
 
-export type WeekdayBusinessHours = {
+export type SchedulerWeekdayBusinessHours = {
   active?: boolean | string | number | null;
-  ativo?: boolean | string | number | null;
   opensAt?: string | null;
-  abertura?: string | null;
   closesAt?: string | null;
+};
+
+export type LegacyWeekdayBusinessHoursFields = {
+  /** @deprecated Use `active`. */
+  ativo?: boolean | string | number | null;
+  /** @deprecated Use `opensAt`. */
+  abertura?: string | null;
+  /** @deprecated Use `closesAt`. */
   fechamento?: string | null;
 };
+
+/**
+ * Backward-compatible weekday business-hours input.
+ *
+ * New integrations should prefer `SchedulerWeekdayBusinessHours`.
+ */
+export type WeekdayBusinessHours = SchedulerWeekdayBusinessHours & LegacyWeekdayBusinessHoursFields;
 
 export type BusinessHours = Partial<
   Record<WeekdayKey, WeekdayBusinessHours>
@@ -80,29 +136,41 @@ export type BusinessHours = Partial<
 
 export type AgendaMetadata = {
   professionals?: Professional[];
+  /** @deprecated Use `professionals`. */
   profissionais?: Professional[];
   services?: Service[];
+  /** @deprecated Use `services`. */
   servicos?: Service[];
   business?: {
     opensAt?: string | null;
+    /** @deprecated Use `opensAt`. */
     horario_abertura?: string | null;
     closesAt?: string | null;
+    /** @deprecated Use `closesAt`. */
     horario_fechamento?: string | null;
     businessHours?: BusinessHours | null;
+    /** @deprecated Use `businessHours`. */
     horarios_semana?: HorariosSemanaTenant | null;
     hasBreak?: boolean | string | null;
+    /** @deprecated Use `hasBreak`. */
     tem_pausa?: boolean | string | null;
     breakStartsAt?: string | null;
+    /** @deprecated Use `breakStartsAt`. */
     pausa_inicio?: string | null;
     breakEndsAt?: string | null;
+    /** @deprecated Use `breakEndsAt`. */
     pausa_fim?: string | null;
     agendaGranularityMinutes?: number | null;
+    /** @deprecated Use `agendaGranularityMinutes`. */
     granularidade_agenda?: number | null;
     weekScaleMinutes?: number | null;
+    /** @deprecated Use `weekScaleMinutes`. */
     escala_visual_semana_agenda_minutos?: number | null;
     appointmentColorMode?: "default" | "appointment" | "padrao" | "por_cliente" | null;
+    /** @deprecated Use `appointmentColorMode`. */
     agenda_cor_modo?: "default" | "appointment" | "padrao" | "por_cliente" | null;
     defaultAppointmentColor?: string | null;
+    /** @deprecated Use `defaultAppointmentColor`. */
     agenda_cor_padrao?: string | null;
   } | null;
   /** @deprecated Use `business`. */
@@ -129,16 +197,21 @@ export type AppointmentServiceLink = {
   servico_id: string;
   ordem?: number;
   durationMinutes?: number;
+  /** @deprecated Use `durationMinutes`. */
   duracao_minutos?: number;
   price?: number;
+  /** @deprecated Use `price`. */
   preco?: number;
   servicos?: {
     id?: string;
     name?: string;
+    /** @deprecated Use `name`. */
     nome?: string;
     durationMinutes?: number;
+    /** @deprecated Use `durationMinutes`. */
     duracao_minutos?: number;
     price?: number;
+    /** @deprecated Use `price`. */
     preco?: number;
   } | null;
 };
@@ -151,95 +224,117 @@ export type AppointmentProductLink = {
   preco_unitario_snapshot: number;
 };
 
-export type Appointment = {
+export type SchedulerAppointment = {
   id: string;
-  /** ISO instant. `data_hora` remains supported for existing Zigo backends. */
+  /** ISO instant. */
   startsAt?: string;
-  data_hora?: string;
   durationMinutes?: number;
-  duracao_minutos?: number;
   /** Preparation/travel time reserved before the appointment, in minutes. */
   bufferBeforeMinutes?: number | null;
-  buffer_antes_minutos?: number | null;
   /** Cleanup/travel time reserved after the appointment, in minutes. */
   bufferAfterMinutes?: number | null;
-  buffer_depois_minutos?: number | null;
   clientName?: string;
-  cliente_nome?: string;
   clientId?: string | null;
-  cliente_id?: string | null;
   clientPhone?: string | null;
-  cliente_telefone?: string | null;
   appointmentColor?: string | null;
-  cor_agendamento?: string | null;
   appointmentColorIsCustom?: boolean | null;
-  cor_agendamento_personalizada?: boolean | null;
   status: string;
   paymentStatus?: string | null;
-  pagamento_status?: string | null;
   price?: number | null;
-  preco?: number | null;
   cancellationReason?: string | null;
-  motivo_cancelamento?: string | null;
   canceledAt?: string | null;
-  cancelado_em?: string | null;
   canceledBy?: string | null;
-  cancelado_por?: string | null;
   advancePaymentStatus?: string | null;
-  adiantamento_status?: string | null;
   advancePaymentAmount?: number | null;
-  adiantamento_valor_snapshot?: number | null;
   advancePaidAt?: string | null;
-  adiantamento_pago_em?: string | null;
   prepaid?: boolean | null;
-  cobranca_antecipada?: boolean | null;
   prepaidAt?: string | null;
-  cobranca_antecipada_em?: string | null;
   notes?: string | null;
-  notas?: string | null;
   serviceId?: string | null;
-  servico_id?: string | null;
   servicesCount?: number | null;
-  servicos_count?: number | null;
   professionalId?: string | null;
-  profissional_id?: string | null;
   services?:
     | { name?: string; durationMinutes?: number | null; price?: number | null }
     | { name?: string; durationMinutes?: number | null; price?: number | null }[]
     | null;
+  recurrence?: string | null;
+  recurrenceExceptions?: string[] | null;
+  recurrenceOverrides?: Record<string, AppointmentOccurrenceOverride> | null;
+};
+
+export type LegacyAppointmentFields = {
+  /** @deprecated Use `startsAt`. */
+  data_hora?: string;
+  /** @deprecated Use `durationMinutes`. */
+  duracao_minutos?: number;
+  /** @deprecated Use `bufferBeforeMinutes`. */
+  buffer_antes_minutos?: number | null;
+  /** @deprecated Use `bufferAfterMinutes`. */
+  buffer_depois_minutos?: number | null;
+  /** @deprecated Use `clientName`. */
+  cliente_nome?: string;
+  /** @deprecated Use `clientId`. */
+  cliente_id?: string | null;
+  /** @deprecated Use `clientPhone`. */
+  cliente_telefone?: string | null;
+  /** @deprecated Use `appointmentColor`. */
+  cor_agendamento?: string | null;
+  /** @deprecated Use `appointmentColorIsCustom`. */
+  cor_agendamento_personalizada?: boolean | null;
+  /** @deprecated Use `paymentStatus`. */
+  pagamento_status?: string | null;
+  /** @deprecated Use `price`. */
+  preco?: number | null;
+  /** @deprecated Use `cancellationReason`. */
+  motivo_cancelamento?: string | null;
+  /** @deprecated Use `canceledAt`. */
+  cancelado_em?: string | null;
+  /** @deprecated Use `canceledBy`. */
+  cancelado_por?: string | null;
+  /** @deprecated Use `advancePaymentStatus`. */
+  adiantamento_status?: string | null;
+  /** @deprecated Use `advancePaymentAmount`. */
+  adiantamento_valor_snapshot?: number | null;
+  /** @deprecated Use `advancePaidAt`. */
+  adiantamento_pago_em?: string | null;
+  /** @deprecated Use `prepaid`. */
+  cobranca_antecipada?: boolean | null;
+  /** @deprecated Use `prepaidAt`. */
+  cobranca_antecipada_em?: string | null;
+  /** @deprecated Use `notes`. */
+  notas?: string | null;
+  /** @deprecated Use `serviceId`. */
+  servico_id?: string | null;
+  /** @deprecated Use `servicesCount`. */
+  servicos_count?: number | null;
+  /** @deprecated Use `professionalId`. */
+  profissional_id?: string | null;
+  /** @deprecated Use `services`. */
   servicos?:
     | { name?: string; nome?: string; durationMinutes?: number | null; duracao_minutos?: number | null; price?: number | null; preco?: number | null }
     | { name?: string; nome?: string; durationMinutes?: number | null; duracao_minutos?: number | null; price?: number | null; preco?: number | null }[]
     | null;
+  /** @deprecated Use `services`. */
   agendamento_servicos?: AppointmentServiceLink[] | null;
+  /** @deprecated Use host-managed product metadata. */
   agendamento_produtos?: AppointmentProductLink[] | null;
+  /** @deprecated Use `professionalId` and the `professionals` metadata collection. */
   profissionais?: { name?: string; nome?: string } | { name?: string; nome?: string }[] | null;
-
-  // Recurrence.
-  // These fields live on the appointment contract itself, not only in the
-  // recurrence package. The host backend needs to see rule, exceptions and
-  // overrides together even if the plugin is not installed. Without the plugin,
-  // they are simply ignored and the appointment appears once on its own date.
-
-  /** iCalendar RRULE (RFC 5545): `"FREQ=WEEKLY;BYDAY=TU"`. */
-  recurrence?: string | null;
+  /** @deprecated Use `recurrence`. */
   recorrencia?: string | null;
-
-  /** Canceled occurrences, as date keys: `["2026-08-18"]`. */
-  recurrenceExceptions?: string[] | null;
+  /** @deprecated Use `recurrenceExceptions`. */
   recorrencia_excecoes?: string[] | null;
-
-  /**
-   * Rescheduled occurrences, indexed by the original slot day.
-   *
-   * The key does not change when the occurrence moves to another day. It says
-   * which repeat changed, the same role as iCalendar `RECURRENCE-ID`.
-   *
-   * `{ "2026-08-18": { startsAt: "...T20:00:00Z", durationMinutes: 90 } }`
-   */
-  recurrenceOverrides?: Record<string, AppointmentOccurrenceOverride> | null;
+  /** @deprecated Use `recurrenceOverrides`. */
   recorrencia_alteracoes?: Record<string, AppointmentOccurrencePatch> | null;
 };
+
+/**
+ * Backward-compatible appointment input.
+ *
+ * New integrations should prefer `SchedulerAppointment`; the extra fields are
+ * accepted only to keep older Zigo-shaped backends working.
+ */
+export type Appointment = SchedulerAppointment & LegacyAppointmentFields;
 
 /** What can change on one occurrence without affecting the rest of the series. */
 export type AppointmentOccurrencePatch = Partial<

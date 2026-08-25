@@ -137,6 +137,16 @@ describe("public package vocabulary", () => {
     ];
 
     expect(publicIndex).not.toMatch(/export\s+type\s+\*\s+from\s+["']\.\/types["']/);
+    for (const name of [
+      "SchedulerAppointment",
+      "SchedulerProfessional",
+      "SchedulerService",
+      "SchedulerWeekdayBusinessHours",
+    ]) {
+      expect(publicIndex, `${name} should be available for new public integrations`).toMatch(
+        new RegExp(`\\b${name}\\b`),
+      );
+    }
     for (const name of forbiddenExports) {
       expect(publicIndex, `${name} must stay in legacy compatibility, not the root API`).not.toMatch(
         new RegExp(`\\b${name}\\b`),
@@ -214,11 +224,11 @@ describe("framework-free layer portability", () => {
     }
   });
 
-  it("core does not touch the DOM either", () => {
+  it.each(["core", "engine"])("%s does not touch the DOM", (pkg) => {
     // Core is the layer that should make sense to port to PHP, Python or Go.
     // The other three can calculate geometry; core should not even do that.
     const offences: string[] = [];
-    for (const file of sourceFiles(join(ROOT, "packages", "core", "src"))) {
+    for (const file of sourceFiles(join(ROOT, "packages", pkg, "src"))) {
       const raw = readFileSync(file, "utf8");
       // Not preceded by a dot or word character: `input.window.startMin` is one
       // of our fields, while `window.innerHeight` is the browser.

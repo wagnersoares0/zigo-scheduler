@@ -1,5 +1,27 @@
 import { nextDateKey, zonedDayRangeUtc, type TimeZone } from "@zigoschedule/scheduler-core";
-import { DEFAULT_WEEK_START, dateKey, type WeekStart } from "@zigoschedule/scheduler-engine";
+import { DEFAULT_WEEK_START, type WeekStart } from "@zigoschedule/scheduler-engine";
+
+export const dateMarkerKey = (date: Date): string =>
+  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+
+export const dateMarkerFromKey = (dayKey: string): Date => new Date(`${dayKey}T12:00:00.000Z`);
+
+export const addDaysKey = (dayKey: string, days: number): string => {
+  const date = dateMarkerFromKey(dayKey);
+  date.setUTCDate(date.getUTCDate() + days);
+  return dateMarkerKey(date);
+};
+
+export const weekDayKeys = (
+  date: Date,
+  startsOn: WeekStart = DEFAULT_WEEK_START
+): string[] => {
+  const selected = dateMarkerKey(date);
+  const weekday = dateMarkerFromKey(selected).getUTCDay();
+  const back = (weekday - startsOn + 7) % 7;
+  const start = addDaysKey(selected, -back);
+  return Array.from({ length: 7 }, (_, index) => addDaysKey(start, index));
+};
 
 /**
  * The instants a set of visible days actually covers, in the business zone.
@@ -19,8 +41,8 @@ export function visibleDaysWindow(
   days: Date[],
   timeZone: TimeZone
 ): { from: Date; to: Date } {
-  const firstKey = dateKey(days[0]);
-  const lastKey = dateKey(days[days.length - 1]);
+  const firstKey = dateMarkerKey(days[0]);
+  const lastKey = dateMarkerKey(days[days.length - 1]);
   return {
     from: zonedDayRangeUtc(firstKey, timeZone).start,
     // Half-open: up to, and not including, midnight that ends the last day.
@@ -39,11 +61,17 @@ export const monthGridStart = (
   date: Date,
   startsOn: WeekStart = DEFAULT_WEEK_START
 ): Date => {
-  const first = new Date(date.getFullYear(), date.getMonth(), 1);
-  const back = (first.getDay() - startsOn + 7) % 7;
-  first.setDate(first.getDate() - back);
-  first.setHours(0, 0, 0, 0);
-  return first;
+  return dateMarkerFromKey(monthGridStartKey(date, startsOn));
+};
+
+export const monthGridStartKey = (
+  date: Date,
+  startsOn: WeekStart = DEFAULT_WEEK_START
+): string => {
+  const selected = dateMarkerKey(date);
+  const first = `${selected.slice(0, 8)}01`;
+  const back = (dateMarkerFromKey(first).getUTCDay() - startsOn + 7) % 7;
+  return addDaysKey(first, -back);
 };
 
 /**
@@ -58,8 +86,10 @@ export function monthGridWindow(
   timeZone: TimeZone,
   startsOn: WeekStart = DEFAULT_WEEK_START
 ): { from: Date; to: Date } {
-  const start = monthGridStart(date, startsOn);
-  const last = new Date(start);
-  last.setDate(start.getDate() + 41);
-  return visibleDaysWindow([start, last], timeZone);
+  const start = monthGridStartKey(date, startsOn);
+  const last = addDaysKey(start, 41);
+  return {
+    from: zonedDayRangeUtc(start, timeZone).start,
+    to: zonedDayRangeUtc(nextDateKey(last), timeZone).start,
+  };
 }

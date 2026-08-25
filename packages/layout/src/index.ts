@@ -21,8 +21,13 @@ export { buildAgendaMonthLayout } from "./build-month-layout";
  */
 export { fromDayKey, dateKey, toHHMM } from "./build-agenda-layout";
 export {
+  addDaysKey,
+  dateMarkerFromKey,
+  dateMarkerKey,
+  weekDayKeys,
   visibleDaysWindow,
   monthGridStart,
+  monthGridStartKey,
   monthGridWindow,
 } from "./visible-window";
 export {

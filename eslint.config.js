@@ -40,6 +40,7 @@ export default tseslint.config(
       "scripts/verify-scroll.mjs",
       "scripts/verify-visual.mjs",
       "packages/*/dist/**",
+      "templates/*/dist/**",
       "**/*.d.ts",
     ],
   },

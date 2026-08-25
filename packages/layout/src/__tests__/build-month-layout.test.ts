@@ -63,6 +63,17 @@ describe("the grid", () => {
     expect(layout.cells.filter((cell) => cell.isCurrentMonth)).toHaveLength(31);
   });
 
+  it("keeps month cells on the selected business month across process timezones", () => {
+    const layout = build({
+      date: new Date("2026-08-15T00:00:00.000Z"),
+      appointments: [at("2026-08-12", "09:00", "timezone-safe")],
+    });
+
+    expect(layout.monthLabel).toBe("August 2026");
+    expect(layout.cells.filter((cell) => cell.isCurrentMonth)).toHaveLength(31);
+    expect(layout.cells.find((cell) => cell.dayKey === "2026-08-12")?.entries[0]?.id).toBe("timezone-safe");
+  });
+
   it("lays cells out in seven columns", () => {
     const layout = build();
     expect(layout.columnWidth).toBe(100);

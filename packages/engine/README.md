@@ -12,7 +12,7 @@ time utilities, appointment buffer helpers or public TypeScript types.
 The engine is where professional scheduler rules are normalized before a UI
 draws them: appointment duration, buffers, resource ids, blocked time, business
 hours, status, callbacks and FullCalendar-like option names. It does not render
-React, Web Components or DOM.
+React or Web Components, and it does not read browser DOM state.
 
 ## Install
 
@@ -53,4 +53,5 @@ const resources = buildAgendaResourceInputs({
 normalizeAppointmentStatus("cancelled"); // "canceled"
 ```
 
-The engine does not touch the DOM and does not depend on React.
+The engine does not depend on React or browser DOM APIs. Pointer and element
+measurement concerns live in `@zigoschedule/scheduler-interaction`.

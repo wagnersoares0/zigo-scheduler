@@ -9,3 +9,4 @@ export * from "./ElementMirror";
 export * from "./AutoScroller";
 export * from "./AgendaElementDragging";
 export * from "./AgendaEventResizing";
+export * from "./AgendaHitSystem";

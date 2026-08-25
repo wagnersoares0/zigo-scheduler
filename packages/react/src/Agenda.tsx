@@ -17,7 +17,7 @@ import type {
   AppointmentDetailsMode,
 } from "./components/details/AppointmentDetailsModal";
 import { AgendaConfigProvider } from "./config/AgendaConfigContext";
-import { createAgendaOptions } from "@zigoschedule/scheduler-engine";
+import { createAgendaOptions, type AgendaOptionInput } from "@zigoschedule/scheduler-engine";
 import {
   normalizeAgendaGranularity,
   normalizeAgendaWeekVisualScale,
@@ -47,12 +47,15 @@ import {
 } from "@zigoschedule/scheduler-engine";
 import { agendaMinuteToPx, getAgendaVisualEndMinute } from "@zigoschedule/scheduler-engine";
 import { minuteFromAgendaGridY } from "@zigoschedule/scheduler-engine";
-import { DEFAULT_WEEK_START, dateKey, weekDays } from "@zigoschedule/scheduler-engine";
+import { DEFAULT_WEEK_START } from "@zigoschedule/scheduler-engine";
 import { groupAppointmentsByDay, groupBlocksByDay } from "@zigoschedule/scheduler-engine";
 import {
+  dateKey,
   expandRecurringAppointments,
+  fromDayKey,
   monthGridWindow,
   visibleDaysWindow,
+  weekDayKeys,
 } from "@zigoschedule/scheduler-layout";
 import type {
   Appointment,
@@ -71,6 +74,7 @@ import {
   type AppointmentColorMode,
 } from "@zigoschedule/scheduler-core";
 import { useAgendaClock } from "./hooks/useAgendaClock";
+import { AgendaErrorBoundary } from "./components/shell/AgendaErrorBoundary";
 
 const LazyAgendaMonthView = lazy(() =>
   import("./components/views/AgendaMonthView").then((module) => ({
@@ -116,6 +120,8 @@ export type AgendaProps = {
   locale?: string;
   /** Optional overrides for built-in labels and aria text. */
   messages?: AgendaMessagesInput;
+  /** Rendering and lifecycle callbacks compatible with the scheduler option contract. */
+  calendarOptions?: Omit<AgendaOptionInput, "initialView" | "locale" | "slotDurationMinutes" | "snapDurationMinutes" | "timeZone">;
   /** Which view to render. */
   view?: "day" | "week" | "month";
   /**
@@ -157,6 +163,10 @@ export type AgendaProps = {
   rowHeight?: number;
   /** Set false to render read-only: no dragging, no resizing. */
   editable?: boolean;
+  /** Shows a non-interactive loading state while the host refreshes data. */
+  loading?: boolean;
+  /** Receives errors thrown by calendar render callbacks or lifecycle hooks. */
+  onAgendaCallbackError?: (error: Error | null) => void;
   /**
    * By default past slots cannot be selected. Set false when that guard is not
    * wanted, such as in a demo where every day has to stay interactive.
@@ -220,11 +230,13 @@ export const Agenda = memo(function Agenda({
   timeZone = DEFAULT_TIME_ZONE,
   locale,
   messages,
+  calendarOptions: calendarOptionInput,
   view = "week",
   slotMinutes = 30,
   weekScaleMinutes = 30,
   weekStartsOn = DEFAULT_WEEK_START,
   editable = true,
+  loading = false,
   rowHeight,
   colorMode = "appointment",
   defaultColor = DEFAULT_APPOINTMENT_COLOR,
@@ -238,9 +250,10 @@ export const Agenda = memo(function Agenda({
   onDetailsAction,
   onBlocked,
   onSelectRange,
+  onAgendaCallbackError,
 }: AgendaProps) {
   const days = useMemo(
-    () => (view === "week" ? weekDays(date, weekStartsOn) : [date]),
+    () => (view === "week" ? weekDayKeys(date, weekStartsOn).map(fromDayKey) : [fromDayKey(dateKey(date))]),
     [view, date, weekStartsOn]
   );
   const agendaMessages = useMemo(
@@ -540,19 +553,24 @@ export const Agenda = memo(function Agenda({
   const calendarOptions = useMemo(
     () =>
       createAgendaOptions({
+        ...calendarOptionInput,
         timeZone,
         locale,
         slotDurationMinutes: step,
         snapDurationMinutes: step,
         initialView: canonicalView,
       }),
-    [canonicalView, locale, step, timeZone]
+    [calendarOptionInput, canonicalView, locale, step, timeZone]
   );
 
   if (view === "month") {
     return (
       <AgendaConfigProvider timeZone={timeZone} locale={locale} messages={messages}>
-        <div className="zigo-scheduler overflow-auto">
+        <AgendaErrorBoundary
+          resetKeys={[view, date.getTime(), appointments, blocks, professionals]}
+          onError={onAgendaCallbackError}
+        >
+        <div className="zigo-scheduler overflow-auto" aria-busy={loading}>
         <Suspense fallback={null}>
           <LazyAgendaMonthView
             weekStartsOn={weekStartsOn}
@@ -567,10 +585,12 @@ export const Agenda = memo(function Agenda({
             onOpenDay={NOOP}
             calendarOptions={calendarOptions}
             calendarView="dayGridMonth"
+            onAgendaCallbackError={onAgendaCallbackError}
           />
         </Suspense>
         {detailsModal}
         </div>
+        </AgendaErrorBoundary>
       </AgendaConfigProvider>
     );
   }
@@ -584,7 +604,11 @@ export const Agenda = memo(function Agenda({
         host clips it, no scrollbar anywhere. This wrapper makes the contract
         hold whatever the host's container happens to be.
       */}
-      <div className="zigo-scheduler">
+      <AgendaErrorBoundary
+        resetKeys={[view, date.getTime(), appointments, blocks, professionals]}
+        onError={onAgendaCallbackError}
+      >
+      <div className="zigo-scheduler" aria-busy={loading}>
       <AgendaGrid
         date={date}
         days={days}
@@ -630,9 +654,12 @@ export const Agenda = memo(function Agenda({
         rowHeight={rowHeight}
         calendarOptions={calendarOptions}
         calendarView={canonicalView}
+        loading={loading}
+        onAgendaCallbackError={onAgendaCallbackError}
       />
       {detailsModal}
       </div>
+      </AgendaErrorBoundary>
     </AgendaConfigProvider>
   );
 });

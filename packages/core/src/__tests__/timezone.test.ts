@@ -3,6 +3,7 @@ import {
   DEFAULT_TIME_ZONE,
   isValidTimeZone,
   nextDateKey,
+  splitZonedBufferedRangeByDay,
   splitZonedRangeByDay,
   zonedDateKey,
   zonedDayOfWeek,
@@ -178,6 +179,33 @@ describe("splitZonedRangeByDay", () => {
 
     expect(splitZonedRangeByDay(start, 60, NEW_YORK)).toEqual([
       { dayKey: "2026-03-08", startMinute: 90, endMinute: 210 },
+    ]);
+  });
+});
+
+describe("splitZonedBufferedRangeByDay", () => {
+  it("keeps a buffer-only segment on the following local day", () => {
+    const start = zonedTimeToUtc("2030-08-12", 23 * 60 + 45, NEW_YORK);
+
+    expect(splitZonedBufferedRangeByDay(start, 15, {
+      bufferBeforeMinutes: 0,
+      bufferAfterMinutes: 30,
+      timeZone: NEW_YORK,
+    })).toEqual([
+      {
+        dayKey: "2030-08-12",
+        startMinute: 23 * 60 + 45,
+        endMinute: 24 * 60,
+        bufferStartMinute: 23 * 60 + 45,
+        bufferEndMinute: 24 * 60,
+      },
+      {
+        dayKey: "2030-08-13",
+        startMinute: 0,
+        endMinute: 0,
+        bufferStartMinute: 0,
+        bufferEndMinute: 30,
+      },
     ]);
   });
 });

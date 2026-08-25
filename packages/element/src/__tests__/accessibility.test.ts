@@ -91,4 +91,11 @@ describe("web component keyboard accessibility", () => {
 
     expect(root.querySelector(".za-sheet")).not.toBeNull();
   });
+
+  it("labels month keyboard controls with their action", () => {
+    const element = mount({ view: "month", date: "2026-08-10", timezone: TIME_ZONE });
+    const entry = element.shadowRoot!.querySelector<HTMLElement>("[data-event-id='apt-1']")!;
+
+    expect(entry.getAttribute("aria-label")).toContain("Olivia Carter");
+  });
 });

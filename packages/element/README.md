@@ -35,8 +35,8 @@ CSS import; styles are isolated inside the shadow root.
 | Integration | Works in HTML, PHP, Laravel, Django, Rails, CMS pages and no-build prototypes. |
 
 Roadmap, not included yet: horizontal resource timeline, multi-resource
-appointments, capacity/group bookings, keyboard move/resize, external drag from
-an outside list and scheduling assistant.
+appointments, capacity/group bookings, keyboard move/resize for the Web
+Component, external drag from an outside list and scheduling assistant.
 
 For every attribute, property, DOM event and edge-case rule, see the repository
 [`API_REFERENCE.md`](https://github.com/wagnersoares0/zigo-scheduler/blob/main/API_REFERENCE.md).
@@ -57,7 +57,7 @@ With a CDN:
 
 ```html
 <script type="module"
-  src="https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.3.2/dist/zigo-scheduler.global.js"></script>
+  src="https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.4.0/dist/zigo-scheduler.global.js"></script>
 ```
 
 ## Minimal Example

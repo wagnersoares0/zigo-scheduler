@@ -9,7 +9,6 @@ export * from "./event-adapter";
 export * from "./event-rendering";
 export * from "./event-sources";
 export * from "./event-store";
-export * from "./hit-system";
 export * from "./interaction-state";
 export * from "./mutation";
 export * from "./resource-adapter";

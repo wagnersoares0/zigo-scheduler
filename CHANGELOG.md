@@ -5,6 +5,31 @@ All notable changes to Zigo Scheduler will be documented here.
 The project follows the spirit of Keep a Changelog. Releases are still pre-1.0,
 so minor versions may refine public contracts before the stable API is cut.
 
+## [0.4.0] - 2026-08-24
+
+### Fixed
+
+- Day and month layout now derive calendar keys independently of the host
+  process time zone, preventing appointments from disappearing on UTC servers.
+- Appointment buffers that cross midnight now reserve and render their next-day
+  segment, so conflict validation cannot miss an occupied early slot.
+- The React starter runs directly from `templates/react` with its own Vite and
+  PostCSS configuration.
+
+### Added
+
+- React exposes `loading`, `calendarOptions` and `onAgendaCallbackError`; host
+  rendering failures are contained by an Error Boundary.
+- GitHub vulnerability alerts, Dependabot security updates and private
+  vulnerability reporting are enabled; Dependabot configuration is versioned.
+
+### Changed
+
+- The public data contract is English-first. Legacy Zigo-shaped fields remain
+  supported only as deprecated compatibility input.
+- DOM hit testing moved from `scheduler-engine` to `scheduler-interaction`,
+  leaving the engine portable for non-DOM renderers.
+
 ## [0.3.2] - 2026-08-10
 
 ### Added

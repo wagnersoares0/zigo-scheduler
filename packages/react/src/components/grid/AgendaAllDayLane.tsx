@@ -1,6 +1,11 @@
 "use client";
 import { memo } from "react";
-import type { Appointment, Block } from "@zigoschedule/scheduler-engine";
+import {
+  getAppointmentProfessionalId,
+  getBlockProfessionalId,
+  type Appointment,
+  type Block,
+} from "@zigoschedule/scheduler-engine";
 import { useAgendaMessages } from "../../config/AgendaConfigContext";
 
 type AgendaGridColumn = {
@@ -54,11 +59,11 @@ export const AgendaAllDayLane = memo(function AgendaAllDayLane({
         const businessHours = getColumnBusinessHours(col.dayKey);
         const columnItems = columnItemsByKey?.get(colKey);
         const dayAgs = columnItems?.ags ?? (agsByDay.get(col.dayKey) ?? []).filter((ag) =>
-          col.profId ? (ag.profissional_id ?? "") === col.profId : true,
+          col.profId ? getAppointmentProfessionalId(ag) === col.profId : true,
         );
         const dayBloqs = columnItems?.bloqs ?? (bloqsByDay.get(col.dayKey) ?? []).filter((bloq) =>
           col.profId
-            ? (bloq.profissional_id ?? null) === col.profId || bloq.profissional_id == null
+            ? getBlockProfessionalId(bloq) === col.profId || getBlockProfessionalId(bloq) == null
             : true,
         );
         const totalItems = dayAgs.length + dayBloqs.length;

@@ -175,6 +175,25 @@ describe("validateAgendaRange", () => {
     expect(afterBuffer).toEqual({ ok: true });
   });
 
+  it("blocks the following day when only an appointment buffer crosses midnight", () => {
+    const context = makeOpenContext("2030-08-12", [{
+      id: "night-buffer",
+      startsAt: zonedTimeToUtc("2030-08-12", 23 * 60 + 45, "America/New_York").toISOString(),
+      durationMinutes: 15,
+      bufferAfterMinutes: 30,
+      clientName: "Night client",
+      status: "confirmed",
+      professionalId: "prof-a",
+    }]);
+
+    expect(validateAgendaRange(context, {
+      dayKey: "2030-08-13",
+      resourceId: "prof-a",
+      startMinute: 15,
+      endMinute: 30,
+    })).toMatchObject({ ok: false, code: "APPOINTMENT_CONFLICT" });
+  });
+
   it("validates appointments in the configured business time zone", () => {
     const context = buildAgendaEngineContext({
       resources: profs,

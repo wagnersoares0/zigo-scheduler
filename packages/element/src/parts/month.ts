@@ -7,6 +7,7 @@ const buildEntry = (entry: AgendaMonthCell["entries"][number]): HTMLElement => {
   line.dataset.eventId = entry.id;
   line.setAttribute("role", "button");
   line.setAttribute("tabindex", "0");
+  line.setAttribute("aria-label", `${entry.timeLabel}, ${entry.title}`);
 
   // No extra dot. Put the color on the time itself: same information, one less
   // decoration, and more room for the title.
@@ -44,6 +45,7 @@ const buildCell = (cell: AgendaMonthCell, messages: AgendaMessages): HTMLElement
     more.dataset.moreDay = cell.dayKey;
     more.setAttribute("role", "button");
     more.setAttribute("tabindex", "0");
+    more.setAttribute("aria-label", messages.viewMoreAppointments(cell.hiddenCount));
     node.appendChild(more);
   }
 

@@ -221,6 +221,17 @@ export type ZonedRangeDaySegment = {
   endMinute: number;
 };
 
+export type ZonedBufferedRangeDaySegment = ZonedRangeDaySegment & {
+  bufferStartMinute: number;
+  bufferEndMinute: number;
+};
+
+export type ZonedBufferedRangeOptions = {
+  bufferBeforeMinutes: number;
+  bufferAfterMinutes: number;
+  timeZone: TimeZone;
+};
+
 export function splitZonedRangeByDay(
   startsAt: Date | string,
   durationMinutes: number,
@@ -249,6 +260,41 @@ export function splitZonedRangeByDay(
   }
 
   return segments;
+}
+
+/**
+ * Splits an appointment and its reserved time by business day. Buffer-only
+ * segments retain a zero-length appointment range so consumers can reserve
+ * time on an adjacent day without claiming the appointment happened there.
+ */
+export function splitZonedBufferedRangeByDay(
+  startsAt: Date | string,
+  durationMinutes: number,
+  { bufferBeforeMinutes, bufferAfterMinutes, timeZone }: ZonedBufferedRangeOptions,
+): ZonedBufferedRangeDaySegment[] {
+  const start = startsAt instanceof Date ? startsAt : new Date(startsAt);
+  const before = Math.max(0, Math.trunc(bufferBeforeMinutes) || 0);
+  const after = Math.max(0, Math.trunc(bufferAfterMinutes) || 0);
+  const appointmentSegments = splitZonedRangeByDay(start, durationMinutes, timeZone);
+  if (!appointmentSegments.length) return [];
+
+  const busySegments = splitZonedRangeByDay(
+    new Date(start.getTime() - before * 60_000),
+    durationMinutes + before + after,
+    timeZone,
+  );
+  const appointmentByDay = new Map(appointmentSegments.map((segment) => [segment.dayKey, segment]));
+
+  return busySegments.map((buffer) => {
+    const appointment = appointmentByDay.get(buffer.dayKey);
+    return {
+      dayKey: buffer.dayKey,
+      startMinute: appointment?.startMinute ?? buffer.startMinute,
+      endMinute: appointment?.endMinute ?? buffer.startMinute,
+      bufferStartMinute: buffer.startMinute,
+      bufferEndMinute: buffer.endMinute,
+    };
+  });
 }
 
 /** Current date key and minutes-since-midnight in `timeZone`. */

@@ -6,6 +6,7 @@ import { createServer } from "vite";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const fixtureRoot = path.join(rootDir, "tests/browser");
+const packageSource = (name) => path.join(rootDir, "packages", name, "src/index.ts");
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -73,6 +74,19 @@ try {
     root: fixtureRoot,
     logLevel: "error",
     plugins: [react()],
+    resolve: {
+      // Browser behavior is proved against this checkout; package distribution
+      // is covered separately by verify-package in a clean consumer install.
+      alias: {
+        "@zigoschedule/scheduler-react/styles.css": path.join(rootDir, "packages/react/src/styles.css"),
+        "@zigoschedule/scheduler-core": packageSource("core"),
+        "@zigoschedule/scheduler-engine": packageSource("engine"),
+        "@zigoschedule/scheduler-layout": packageSource("layout"),
+        "@zigoschedule/scheduler-interaction": packageSource("interaction"),
+        "@zigoschedule/scheduler-react": packageSource("react"),
+        "@zigoschedule/scheduler-element": packageSource("element"),
+      },
+    },
     server: { host: "127.0.0.1", port: 0, strictPort: false },
   });
   await server.listen();

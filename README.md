@@ -318,7 +318,7 @@ simple configuration and properties for arrays or objects.
 </div>
 
 <script type="module">
-  import "https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.3.2/dist/zigo-scheduler.global.js";
+  import "https://cdn.jsdelivr.net/npm/@zigoschedule/scheduler-element@0.4.0/dist/zigo-scheduler.global.js";
 
   const schedule = document.getElementById("schedule");
 
@@ -428,7 +428,10 @@ exception. If it is not, update the appointment directly.
 
 ## Data Contract
 
-The public examples use English field names:
+The supported public contract is English-first. New integrations should model
+their data with `SchedulerAppointment`, `SchedulerProfessional`,
+`SchedulerService` and `SchedulerWeekdayBusinessHours` from
+`@zigoschedule/scheduler-engine`:
 
 ```ts
 type Appointment = {
@@ -443,7 +446,9 @@ type Appointment = {
 };
 ```
 
-Legacy Portuguese backend fields also remain supported:
+`Appointment`, `Professional`, `Service` and `WeekdayBusinessHours` remain
+backward-compatible input types. They still accept legacy Portuguese backend
+fields, but those fields are deprecated and should stay at adapter boundaries:
 `data_hora`, `duracao_minutos`, `cliente_nome`, `profissional_id`,
 `pagamento_status`, `servicos`, `nome`, `preco`, `abertura`, `fechamento` and
 the recurrence aliases with `recorrencia`.

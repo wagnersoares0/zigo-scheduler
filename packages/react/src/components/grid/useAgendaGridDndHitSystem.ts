@@ -7,8 +7,8 @@ import {
   type AgendaHitSystem,
   buildAgendaHitSystem,
   queryAgendaHit,
-} from "@zigoschedule/scheduler-engine";
-import type { HitTestResult } from "@zigoschedule/scheduler-interaction";
+  type HitTestResult,
+} from "@zigoschedule/scheduler-interaction";
 
 type UseAgendaGridDndHitSystemOptions = {
   dayColRefs: MutableRefObject<Map<string, HTMLDivElement>>;
@@ -108,19 +108,25 @@ export function useAgendaGridDndHitSystem({
         dndHitCacheRef.current = cache;
       }
 
-      const hit = queryAgendaHit(cache, scrollEl, clientX, clientY, snapMinutes, (y, height) => {
-        return minuteFromAgendaGridY({
+      const hit = queryAgendaHit({
+        hitSystem: cache,
+        scrollEl,
+        clientX,
+        clientY,
+        snapMinutes,
+        minuteFromY: (y, height) => minuteFromAgendaGridY({
           y,
           height,
           startMinute: startDay,
           endMinute: axisEndDay,
           snapMinutes,
           maxMinute: Math.max(startDay, endDay - snapMinutes),
-        });
-      }, {
-        minMinute: startDay,
-        maxMinute: Math.max(startDay, endDay - snapMinutes),
-        originMinute: startDay,
+        }),
+        snapOptions: {
+          minMinute: startDay,
+          maxMinute: Math.max(startDay, endDay - snapMinutes),
+          originMinute: startDay,
+        },
       });
       return hit ? { dayKey: hit.dayKey, profId: hit.resourceId, minute: hit.minute } : null;
     },

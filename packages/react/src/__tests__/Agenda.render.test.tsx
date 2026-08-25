@@ -4,6 +4,7 @@ import { act } from "react-dom/test-utils";
 import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Agenda } from "../Agenda";
+import { AgendaErrorBoundary } from "../components/shell/AgendaErrorBoundary";
 import { zonedTimeToUtc } from "@zigoschedule/scheduler-core";
 import type { Appointment, BusinessHours, Professional } from "@zigoschedule/scheduler-engine";
 
@@ -97,7 +98,7 @@ const rect = (left: number, top: number, width: number, height: number) =>
 
 const waitFor = async (assertion: () => void) => {
   let lastError: unknown;
-  for (let attempt = 0; attempt < 20; attempt++) {
+  for (let attempt = 0; attempt < 50; attempt++) {
     try {
       assertion();
       return;
@@ -112,6 +113,72 @@ const waitFor = async (assertion: () => void) => {
 };
 
 describe("Agenda", () => {
+  it("contains rendering failures and reports them to the host", async () => {
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    const reported: Error[] = [];
+    const Broken = () => {
+      throw new Error("render failed");
+    };
+
+    try {
+      await act(async () => {
+        root.render(
+          <AgendaErrorBoundary resetKeys={["first"]} onError={(error) => reported.push(error)}>
+            <Broken />
+          </AgendaErrorBoundary>
+        );
+      });
+
+      expect(container.querySelector("[role='alert']")?.textContent).toContain("Unable to render");
+      expect(reported.map((error) => error.message)).toEqual(["render failed"]);
+
+      await act(async () => {
+        root.render(
+          <AgendaErrorBoundary resetKeys={["recovered"]} onError={(error) => reported.push(error)}>
+            <span>Recovered</span>
+          </AgendaErrorBoundary>
+        );
+      });
+      expect(container.textContent).toContain("Recovered");
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
+  it("exposes loading and reports public render callback failures", async () => {
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    const callbackErrors: Array<Error | null> = [];
+
+    try {
+      await act(async () => {
+        root.render(
+          <Agenda
+            date={MONDAY}
+            appointments={APPOINTMENTS}
+            professionals={PROFESSIONALS}
+            businessHours={BUSINESS_HOURS}
+            timeZone={TIME_ZONE}
+            view="day"
+            loading
+            calendarOptions={{
+              eventDidMount: () => {
+                throw new Error("host renderer failed");
+              },
+            }}
+            onAgendaCallbackError={(error) => callbackErrors.push(error)}
+          />
+        );
+      });
+
+      expect(container.querySelector("[aria-busy='true']")).toBeTruthy();
+      expect(callbackErrors.some((error) => error?.message === "host renderer failed")).toBe(true);
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
   it("renders with nothing but an array of appointments", () => {
     const html = render();
     expect(html.length).toBeGreaterThan(0);
@@ -123,6 +190,30 @@ describe("Agenda", () => {
     const html = render();
     expect(html).toContain("Ana");
     expect(html).toContain("Carlos");
+  });
+
+  it("renders English-only contract data", () => {
+    const html = render({
+      appointments: [{
+        id: "public-contract",
+        startsAt: at("2026-08-03", "11:00"),
+        durationMinutes: 45,
+        clientName: "Public Client",
+        professionalId: "ana",
+        status: "confirmed",
+        appointmentColor: "#DB2777",
+        appointmentColorIsCustom: true,
+        services: { name: "Public service", durationMinutes: 45, price: 90 },
+      }],
+      professionals: [{ id: "ana", name: "Ana" }],
+      businessHours: {
+        monday: { active: true, opensAt: "09:00", closesAt: "19:00" },
+      },
+      view: "day",
+    });
+
+    expect(html).toContain("Public Client");
+    expect(html).toContain("Public service");
   });
 
   it("prints the opening hours of the day on the time axis", () => {

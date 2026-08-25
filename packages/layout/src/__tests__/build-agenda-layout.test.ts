@@ -263,6 +263,17 @@ describe("events", () => {
     expect(model.events[0].left).toBe(model.columns[1].left);
   });
 
+  it("does not drop the selected business day when the process timezone differs", () => {
+    const model = layout({
+      date: new Date("2026-08-10T00:00:00.000Z"),
+      view: "day",
+      appointments: [at("10:00", 60, "ana", "timezone-safe")],
+    });
+
+    expect(model.columns.map((column) => column.dayKey)).toEqual(["2026-08-10", "2026-08-10"]);
+    expect(model.events.map((event) => event.id)).toContain("timezone-safe");
+  });
+
   it("splits an appointment that crosses midnight into the next day column", () => {
     const model = layout({
       view: "week",
@@ -329,6 +340,33 @@ describe("events", () => {
       overlapCount: 2,
     });
     expect(secondEvent.overlapCount).toBe(2);
+  });
+
+  it("keeps a buffer-only reservation visible on the following day", () => {
+    const aroundTheClock: BusinessHours = {
+      domingo: { ativo: true, abertura: "00:00", fechamento: "24:00" },
+      segunda: { ativo: true, abertura: "00:00", fechamento: "24:00" },
+      terca: { ativo: true, abertura: "00:00", fechamento: "24:00" },
+      quarta: { ativo: true, abertura: "00:00", fechamento: "24:00" },
+      quinta: { ativo: true, abertura: "00:00", fechamento: "24:00" },
+      sexta: { ativo: true, abertura: "00:00", fechamento: "24:00" },
+      sabado: { ativo: true, abertura: "00:00", fechamento: "24:00" },
+    };
+    const model = layout({
+      view: "week",
+      businessHours: aroundTheClock,
+      appointments: [{ ...at("23:45", 15, "ana", "night-buffer"), bufferAfterMinutes: 30 }],
+    });
+    const event = model.events.find((item) => item.dayKey === "2026-08-11");
+
+    expect(event).toMatchObject({
+      id: "night-buffer",
+      startMinute: 0,
+      endMinute: 0,
+      bufferStartMinute: 0,
+      bufferEndMinute: 30,
+    });
+    expect(event?.height).toBe(model.minuteToY(30) - model.minuteToY(0));
   });
 
   it("leaves a non-colliding appointment at full width", () => {

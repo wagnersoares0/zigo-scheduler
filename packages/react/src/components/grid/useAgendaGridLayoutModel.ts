@@ -2,7 +2,8 @@
 
 import { useMemo } from "react";
 import type { Appointment, Block, Professional } from "@zigoschedule/scheduler-engine";
-import { dateKey, toMin, zoneMins } from "@zigoschedule/scheduler-engine";
+import { toMin, zoneMins } from "@zigoschedule/scheduler-engine";
+import { dateKey } from "@zigoschedule/scheduler-layout";
 import {
   buildOverlapLayout,
   getAgendaResourceColumnMetrics,

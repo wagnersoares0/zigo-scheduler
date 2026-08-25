@@ -13,9 +13,9 @@ release.
 
 Please do not open a public issue for a vulnerability.
 
-Use GitHub private security advisories when they are enabled for the repository.
-If that is not available yet, email `contato@zigoapp.com.br` and share only the
-context needed to start triage.
+Use GitHub private vulnerability reporting from the repository Security tab, or
+email `contato@zigoapp.com.br` and share only the context needed to start
+triage. Both channels are monitored for this repository.
 
 Include, when possible:
 
@@ -26,6 +26,11 @@ Include, when possible:
 - expected impact;
 - whether the issue depends on browser behavior, SSR, iframe/portal rendering,
   locale or time zone.
+
+## Triage
+
+We aim to acknowledge a report within seven calendar days. We will confirm the
+affected package/version and coordinate disclosure after a fix is available.
 
 ## Scope
 

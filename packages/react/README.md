@@ -45,8 +45,8 @@ callbacks. Your app still owns persistence.
 | Extensibility | Controlled props, callbacks, custom messages, optional recurrence and headless escape hatch. |
 
 Roadmap, not promised in this package yet: horizontal resource timeline,
-multi-resource appointments, capacity/group bookings, keyboard move/resize,
-external drag from an outside list and scheduling assistant.
+multi-resource appointments, capacity/group bookings, external drag from an
+outside list and scheduling assistant.
 
 ## Install
 

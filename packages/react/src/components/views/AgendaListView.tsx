@@ -16,7 +16,11 @@ import type { AgendaListRow, Professional } from "@zigoschedule/scheduler-engine
 import {
   GRID_MIN,
   DAY_CANCELED_CARD_THEME,
+  getAppointmentColor,
+  getAppointmentColorIsCustom,
   getAppointmentCardTheme,
+  getAppointmentProfessionalId,
+  getBlockProfessionalId,
   getProfessionalCardThemeForVisibleList,
   isCanceledStatus,
 } from "@zigoschedule/scheduler-engine";
@@ -85,16 +89,22 @@ const AgendaListEventRow = memo(function AgendaListEventRow({
   const messages = useAgendaMessages();
   const timeZone = useAgendaTimeZone();
   const isCanceled = isCanceledStatus(row.status);
+  const appointment = row.appointment ?? row.ag;
+  const block = row.block ?? row.bloq;
   const profId =
-    row.kind === "appointment" ? row.ag?.profissional_id : row.bloq?.profissional_id;
+    row.kind === "appointment" && appointment
+      ? getAppointmentProfessionalId(appointment)
+      : row.kind === "block" && block
+        ? getBlockProfessionalId(block)
+        : null;
   const theme =
     row.kind === "appointment"
       ? isCanceled
         ? DAY_CANCELED_CARD_THEME
-        : row.ag
+        : appointment
           ? getAppointmentCardTheme({
-              appointmentColor: row.ag.cor_agendamento,
-              appointmentColorIsCustom: row.ag.cor_agendamento_personalizada,
+              appointmentColor: getAppointmentColor(appointment),
+              appointmentColorIsCustom: getAppointmentColorIsCustom(appointment),
               mode: appointmentColorMode,
               defaultColor: appointmentDefaultColor,
             })
@@ -109,10 +119,10 @@ const AgendaListEventRow = memo(function AgendaListEventRow({
     locale,
   );
   const event =
-    row.kind === "appointment" && row.ag
-      ? appointmentToAgendaEventInput(row.ag, timeZone)
-      : row.kind === "block" && row.bloq
-        ? blockToAgendaEventInput(row.bloq, timeZone)
+    row.kind === "appointment" && appointment
+      ? appointmentToAgendaEventInput(appointment, timeZone)
+      : row.kind === "block" && block
+        ? blockToAgendaEventInput(block, timeZone)
         : null;
   const fallbackEvent = event;
   const { dispatchMouseEnter, dispatchMouseLeave, optionClassName, renderArg } =
@@ -240,16 +250,22 @@ const AgendaListCompactEventRow = memo(function AgendaListCompactEventRow({
   const messages = useAgendaMessages();
   const locale = useAgendaLocale();
   const isCanceled = isCanceledStatus(row.status);
+  const appointment = row.appointment ?? row.ag;
+  const block = row.block ?? row.bloq;
   const profId =
-    row.kind === "appointment" ? row.ag?.profissional_id : row.bloq?.profissional_id;
+    row.kind === "appointment" && appointment
+      ? getAppointmentProfessionalId(appointment)
+      : row.kind === "block" && block
+        ? getBlockProfessionalId(block)
+        : null;
   const theme =
     row.kind === "appointment"
       ? isCanceled
         ? DAY_CANCELED_CARD_THEME
-        : row.ag
+        : appointment
           ? getAppointmentCardTheme({
-              appointmentColor: row.ag.cor_agendamento,
-              appointmentColorIsCustom: row.ag.cor_agendamento_personalizada,
+              appointmentColor: getAppointmentColor(appointment),
+              appointmentColorIsCustom: getAppointmentColorIsCustom(appointment),
               mode: appointmentColorMode,
               defaultColor: appointmentDefaultColor,
             })

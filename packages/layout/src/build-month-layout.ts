@@ -8,7 +8,6 @@ import {
 } from "@zigoschedule/scheduler-core";
 import {
   DEFAULT_WEEK_START,
-  dateKey,
   getAppointmentColor,
   getAppointmentClientName,
   getAppointmentProfessionalId,
@@ -21,7 +20,7 @@ import {
 
 import { expandRecurringAppointments } from "./recurrence-plugin";
 import { resolveLayoutColor } from "./color";
-import { monthGridStart as gridStart, monthGridWindow } from "./visible-window";
+import { addDaysKey, dateMarkerFromKey, dateMarkerKey, monthGridStartKey, monthGridWindow } from "./visible-window";
 import type {
   AgendaMonthCell,
   AgendaMonthEntry,
@@ -65,8 +64,8 @@ export function buildAgendaMonthLayout(input: AgendaMonthLayoutInput): AgendaMon
   } = input;
   const locale = normalizeAgendaLocale(rawLocale);
 
-  const month = date.getMonth();
-  const start = gridStart(date, weekStartsOn);
+  const selectedMonthKey = dateMarkerKey(date).slice(0, 7);
+  const startKey = monthGridStartKey(date, weekStartsOn);
 
   // The month grid spans six weeks, so recurrence expansion must cover all six.
   const appointments = expandRecurringAppointments(
@@ -120,21 +119,20 @@ export function buildAgendaMonthLayout(input: AgendaMonthLayoutInput): AgendaMon
   const cells: AgendaMonthCell[] = [];
 
   for (let index = 0; index < weeks * 7; index++) {
-    const day = new Date(start);
-    day.setDate(start.getDate() + index);
-    const key = dateKey(day);
+    const key = addDaysKey(startKey, index);
+    const day = dateMarkerFromKey(key);
     const all = byDay.get(key) ?? [];
 
     cells.push({
       dayKey: key,
-      dayNumber: day.getDate(),
+      dayNumber: day.getUTCDate(),
       column: index % 7,
       row: Math.floor(index / 7),
       left: (index % 7) * columnWidth,
       top: Math.floor(index / 7) * rowHeight,
       width: columnWidth,
       height: rowHeight,
-      isCurrentMonth: day.getMonth() === month,
+      isCurrentMonth: key.slice(0, 7) === selectedMonthKey,
       isToday: key === todayKey,
       entries: all.slice(0, maxEntriesPerDay),
       hiddenCount: Math.max(0, all.length - maxEntriesPerDay),
@@ -149,6 +147,6 @@ export function buildAgendaMonthLayout(input: AgendaMonthLayoutInput): AgendaMon
     rowHeight,
     totalWidth: columnWidth * 7,
     totalHeight: rowHeight * weeks,
-    monthLabel: date.toLocaleDateString(locale, { month: "long", year: "numeric" }),
+    monthLabel: dateMarkerFromKey(`${selectedMonthKey}-01`).toLocaleDateString(locale, { month: "long", year: "numeric", timeZone: "UTC" }),
   };
 }

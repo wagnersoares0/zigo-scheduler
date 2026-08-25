@@ -1,4 +1,5 @@
 import type { SelectedService, Service } from "../types";
+import { getServiceDurationMinutes, getServiceName, getServicePrice } from "./appointment-fields";
 
 export type SelectedServicesSummary = {
   itens: SelectedService[];
@@ -41,11 +42,11 @@ export function summarizeSelectedServices({
 
   const items = (form.servicosSelecionados ?? []).map((item) => {
     const catalogEntry = servicosCatalogo.find((serv) => serv.id === item.servicoId);
-    const baseDuration = catalogEntry?.duracao_minutos ?? item.duracaoMinutos;
-    const basePrice = catalogEntry?.preco ?? item.preco;
+    const baseDuration = getServiceDurationMinutes(catalogEntry) ?? item.duracaoMinutos;
+    const basePrice = getServicePrice(catalogEntry) ?? item.preco;
     return {
       servicoId: item.servicoId,
-      nome: catalogEntry?.nome ?? item.nome,
+      nome: (catalogEntry ? getServiceName(catalogEntry) : "") || item.nome,
       duracaoMinutos: Math.max(duracaoMinima, Number(baseDuration) || duracaoMinima),
       preco: Math.max(0, Number(basePrice) || 0),
     };

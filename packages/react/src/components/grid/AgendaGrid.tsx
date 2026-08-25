@@ -15,7 +15,8 @@ import type {
   Professional,
 } from "@zigoschedule/scheduler-engine";
 import { SLOT_H, getProfessionalCardThemeForVisibleList } from "@zigoschedule/scheduler-engine";
-import { dateKey, zoneNowParts } from "@zigoschedule/scheduler-engine";
+import { zoneNowParts } from "@zigoschedule/scheduler-engine";
+import { dateKey } from "@zigoschedule/scheduler-layout";
 import {
   getAppointmentDurationMinutes,
   getAppointmentServiceLabel,

@@ -22,14 +22,12 @@ import {
 import {
   zoneMins,
   toMin,
-  dateKey,
-  monthStart,
-  monthEnd,
   zoneNowParts,
   getAppointmentStartsAt,
   getBlockStartTime,
   isCanceledStatus,
 } from "@zigoschedule/scheduler-engine";
+import { addDaysKey, dateKey, dateMarkerFromKey } from "@zigoschedule/scheduler-layout";
 import {
 } from "../grid/AgendaCellRenderHooks";
 import {
@@ -117,15 +115,15 @@ export const AgendaMonthView = memo(function AgendaMonthView({
     items: AgendaMonthMoreItem[];
     anchorRect: AgendaMorePopoverAnchorRect;
   } | null>(null);
-  const startOfMonth = monthStart(date);
-  const endOfMonth = monthEnd(date);
   const selectedKey = dateKey(date);
+  const selectedMonthKey = selectedKey.slice(0, 7);
+  const startOfMonth = dateMarkerFromKey(`${selectedMonthKey}-01`);
   const todayKey = zoneNowParts(timeZone).dayKey;
-  const daysInMonth = endOfMonth.getDate();
+  const daysInMonth = new Date(Date.UTC(startOfMonth.getUTCFullYear(), startOfMonth.getUTCMonth() + 1, 0)).getUTCDate();
   // Empty cells before day 1 depend on the selected week start. This view used
   // to be hardcoded to Sunday while the rest of the library used Monday, which
   // produced different calendars for the same month.
-  const leadingEmpty = (startOfMonth.getDay() - weekStartsOn + 7) % 7;
+  const leadingEmpty = (startOfMonth.getUTCDay() - weekStartsOn + 7) % 7;
   const totalCells = leadingEmpty + daysInMonth;
   const trailingEmpty = (7 - (totalCells % 7)) % 7;
   const cells = useMemo(
@@ -134,9 +132,9 @@ export const AgendaMonthView = memo(function AgendaMonthView({
         if (idx < leadingEmpty || idx >= leadingEmpty + daysInMonth)
           return null;
         const day = idx - leadingEmpty + 1;
-        return new Date(date.getFullYear(), date.getMonth(), day, 12, 0, 0, 0);
+        return dateMarkerFromKey(addDaysKey(`${selectedMonthKey}-01`, day - 1));
       }),
-    [date, daysInMonth, leadingEmpty, totalCells, trailingEmpty],
+    [daysInMonth, leadingEmpty, selectedMonthKey, totalCells, trailingEmpty],
   );
   const dayModelByKey = useMemo(() => {
     const result = new Map<string, AgendaMonthDayModel>();
@@ -221,7 +219,7 @@ export const AgendaMonthView = memo(function AgendaMonthView({
           const key = dateKey(dayDate);
           const isToday = key === todayKey;
           const isSelected = key === selectedKey;
-          const weekend = dayDate.getDay() === 0 || dayDate.getDay() === 6;
+          const weekend = dayDate.getUTCDay() === 0 || dayDate.getUTCDay() === 6;
           const dayModel = dayModelByKey.get(key);
           const totalItems = dayModel?.totalItems ?? 0;
           const normalAgCount = dayModel?.normalAgCount ?? 0;

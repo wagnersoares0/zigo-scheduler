@@ -5,16 +5,14 @@ import {
   normalizeAgendaLocale,
   normalizeAgendaGranularity,
   normalizeAgendaWeekVisualScale,
-  splitZonedRangeByDay,
+  splitZonedBufferedRangeByDay,
   type TimeZone,
 } from "@zigoschedule/scheduler-core";
-import { visibleDaysWindow } from "./visible-window";
+import { dateMarkerFromKey, dateMarkerKey, visibleDaysWindow, weekDayKeys } from "./visible-window";
 import {
   agendaMinuteToPx,
   buildOverlapLayout,
   calculateAgendaDynamicSlotHeight,
-  dateKey,
-  fromDayKey,
   getAgendaVisualEndMinute,
   getAppointmentBufferAfterMinutes,
   getAppointmentBufferBeforeMinutes,
@@ -39,7 +37,6 @@ import {
   hasValidBlockTiming,
   toHHMM,
   toMin,
-  weekDays,
   DEFAULT_WEEK_START,
   getBreakEndMinute,
   getBreakStartMinute,
@@ -67,10 +64,10 @@ const DEFAULT_ROW_HEIGHT = 32;
 const DEFAULT_COLOR = "#2563EB";
 
 const shortDate = (day: Date, locale: string) =>
-  new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit" }).format(day);
+  new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit", timeZone: "UTC" }).format(day);
 
 const weekdayLabel = (day: Date, locale: string) =>
-  new Intl.DateTimeFormat(locale, { weekday: "short" }).format(day);
+  new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" }).format(day);
 
 const isPaidStatus = (value: string | null | undefined): boolean =>
   ["pago", "paid", "confirmado", "confirmed"].includes((value ?? "").trim().toLowerCase());
@@ -115,7 +112,9 @@ export function buildAgendaLayout(input: AgendaLayoutInput): AgendaLayout {
       ? normalizeAgendaWeekVisualScale(input.weekScaleMinutes)
       : normalizeAgendaGranularity(input.slotMinutes);
 
-  const days = view === "week" ? weekDays(date, weekStartsOn) : [date];
+  const selectedDayKey = dateMarkerKey(date);
+  const dayKeys = view === "week" ? weekDayKeys(date, weekStartsOn) : [selectedDayKey];
+  const days = dayKeys.map(dateMarkerFromKey);
 
   // Repeating appointments become their occurrences before anything is
   // positioned. Without the recurrence plugin this is the identity function.
@@ -136,7 +135,7 @@ export function buildAgendaLayout(input: AgendaLayoutInput): AgendaLayout {
   // later does not crop the rest of the week.
   const range = getGridBusinessHoursRange({
     days,
-    selectedDayBusinessHours: hoursForDay(dateKey(date)),
+    selectedDayBusinessHours: hoursForDay(selectedDayKey),
     getBusinessHoursForDay: hoursForDay,
   });
 
@@ -202,7 +201,7 @@ export function buildAgendaLayout(input: AgendaLayoutInput): AgendaLayout {
   const totalWidth = axisWidth + columnWidth * seeds.length;
 
   const columns: AgendaLayoutColumn[] = seeds.map((seed, index) => {
-    const dayKey = dateKey(seed.day);
+    const dayKey = dayKeys[Math.min(index, dayKeys.length - 1)];
     const dayHours = hoursForDay(dayKey);
     const professionalHours = seed.professional
       ? getProfessionalBusinessHoursRange(dayHours, seed.professional, dayKey)
@@ -270,22 +269,19 @@ export function buildAgendaLayout(input: AgendaLayoutInput): AgendaLayout {
     const duration = getAppointmentDurationMinutes(appointment, stepMinutes);
     const bufferBeforeMinutes = getAppointmentBufferBeforeMinutes(appointment);
     const bufferAfterMinutes = getAppointmentBufferAfterMinutes(appointment);
-    const busyStartsAt = new Date(new Date(startsAt).getTime() - bufferBeforeMinutes * 60_000);
-    const busyByDay = new Map(
-      splitZonedRangeByDay(
-        busyStartsAt,
-        duration + bufferBeforeMinutes + bufferAfterMinutes,
-        timeZone,
-      ).map((segment) => [segment.dayKey, segment])
-    );
-
-    for (const segment of splitZonedRangeByDay(startsAt, duration, timeZone)) {
+    for (const segment of splitZonedBufferedRangeByDay(
+      startsAt,
+      duration,
+      { bufferBeforeMinutes, bufferAfterMinutes, timeZone },
+    )) {
       const column = columnFor(segment.dayKey, appointmentProfessionalId);
       if (!column) continue;
       const start = segment.startMinute;
       const end = segment.endMinute;
-      const busy = busyByDay.get(segment.dayKey);
-      if (end <= startMinute || start >= endMinute) continue;
+      const bufferStart = segment.bufferStartMinute;
+      const bufferEnd = segment.bufferEndMinute;
+      const isBufferOnly = start === end;
+      if (bufferEnd <= startMinute || bufferStart >= endMinute) continue;
 
       placed.push({
         id: appointment.id,
@@ -293,9 +289,9 @@ export function buildAgendaLayout(input: AgendaLayoutInput): AgendaLayout {
         column,
         start,
         end,
-        bufferStart: busy?.startMinute ?? start,
-        bufferEnd: busy?.endMinute ?? end,
-        visualEnd: Math.max(end, start + stepMinutes),
+        bufferStart,
+        bufferEnd,
+        visualEnd: isBufferOnly ? bufferEnd : Math.max(end, start + stepMinutes),
         raw: appointment,
       });
     }
@@ -481,4 +477,4 @@ export function buildAgendaLayout(input: AgendaLayoutInput): AgendaLayout {
 }
 
 /** Re-exported so a consumer can build a day key without pulling in the engine. */
-export { dateKey, fromDayKey, toHHMM };
+export { dateMarkerKey as dateKey, dateMarkerFromKey as fromDayKey, toHHMM };

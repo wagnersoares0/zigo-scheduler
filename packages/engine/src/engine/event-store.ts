@@ -1,7 +1,7 @@
 import { GRID_MIN } from "../constants";
 import type { Appointment, Block, Professional } from "../types";
 import { dateKey, normalizeHHMM, toMin } from "../utils/time";
-import { DEFAULT_TIME_ZONE, splitZonedRangeByDay, type TimeZone } from "@zigoschedule/scheduler-core";
+import { DEFAULT_TIME_ZONE, splitZonedBufferedRangeByDay, type TimeZone } from "@zigoschedule/scheduler-core";
 import {
   getAppointmentBufferAfterMinutes,
   getAppointmentBufferBeforeMinutes,
@@ -82,24 +82,19 @@ export const toAppointmentEvents = (
   const durationMinutes = Math.max(GRID_MIN, getAppointmentDurationMinutes(normalized, GRID_MIN));
   const bufferBeforeMinutes = getAppointmentBufferBeforeMinutes(normalized);
   const bufferAfterMinutes = getAppointmentBufferAfterMinutes(normalized);
-  const busyStartsAt = new Date(new Date(startsAt).getTime() - bufferBeforeMinutes * 60_000);
-  const busyByDay = new Map(
-    splitZonedRangeByDay(
-      busyStartsAt,
-      durationMinutes + bufferBeforeMinutes + bufferAfterMinutes,
-      timeZone,
-    ).map((segment) => [segment.dayKey, segment])
-  );
-
-  return splitZonedRangeByDay(startsAt, durationMinutes, timeZone).map((segment) => ({
+  return splitZonedBufferedRangeByDay(
+    startsAt,
+    durationMinutes,
+    { bufferBeforeMinutes, bufferAfterMinutes, timeZone },
+  ).map((segment) => ({
     kind: "appointment",
     id: normalized.id,
     dayKey: segment.dayKey,
     resourceId: toResourceId(getAppointmentProfessionalId(normalized)),
     startMinute: segment.startMinute,
     endMinute: segment.endMinute,
-    bufferStartMinute: busyByDay.get(segment.dayKey)?.startMinute ?? segment.startMinute,
-    bufferEndMinute: busyByDay.get(segment.dayKey)?.endMinute ?? segment.endMinute,
+    bufferStartMinute: segment.bufferStartMinute,
+    bufferEndMinute: segment.bufferEndMinute,
     status: normalized.status,
     appointment: normalized,
     ag: normalized,

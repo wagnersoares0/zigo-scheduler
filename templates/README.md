@@ -6,6 +6,18 @@ Small starter files for testing Zigo Scheduler in a new app.
   appointment state.
 - `html/` uses the Web Component from the CDN with no React dependency.
 
+To run the React starter directly from this repository:
+
+```bash
+cd templates/react
+npm install
+npm run dev
+```
+
+Use `npm run build` to create a production build. The starter includes its own
+Vite and PostCSS configuration, so it does not inherit build tooling from this
+monorepo.
+
 These templates are intentionally small. They show the required host container
 height, scheduler data shape, modal behavior, drag/resize callbacks and where a
 real backend should save changes.

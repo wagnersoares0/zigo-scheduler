@@ -70,8 +70,8 @@ display.
 
 Large planning features that are not in the package yet are intentionally not
 hidden behind placeholders: horizontal resource timeline, multi-resource
-appointments, capacity/group bookings, keyboard move/resize, external drag from
-outside lists, scheduling assistant and export/print.
+appointments, capacity/group bookings, Web Component keyboard move/resize,
+external drag from outside lists, scheduling assistant and export/print.
 
 ## Multi-Tenant And Multi-Professional Contract
 
