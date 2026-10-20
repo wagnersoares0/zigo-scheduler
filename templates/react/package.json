@@ -12,7 +12,7 @@
     "@zigoschedule/scheduler-engine": "0.4.0",
     "@zigoschedule/scheduler-react": "0.4.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.5",
